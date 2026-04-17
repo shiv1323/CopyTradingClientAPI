@@ -15,7 +15,7 @@ const clientSchema = new mongoose.Schema(
     },
     whiteLabel: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "WhiteLabel",
+      ref: "whiteLabel",
       default: null,
     },
     country: {
@@ -83,23 +83,10 @@ const clientSchema = new mongoose.Schema(
       required: false,
       default: null,
     },
-    address: {
-      type: String,
-      required: false,
-      default: null,
-    },
     status: {
       type: String,
       enum: ["active", "inactive", "suspended", "blocked"],
       default: "active",
-    },
-    walletBalance: {
-      type: Number,
-      default: 0,
-    },
-    walletCurrency: {
-      type: String,
-      default: "USD",
     },
     tradingAccLimit: {
       type: Number,
@@ -110,11 +97,12 @@ const clientSchema = new mongoose.Schema(
       default: getUTCTime,
     },
     createdBy: {
-      type: String,
-      default: null,
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+        default: null,
+      },
     },
-  },
-  { collection: "ClientProfile" }
+  { collection: "clientProfile" }
 );
 
-export default mongoose.model("Client", clientSchema);
+export default mongoose.model("clientProfile", clientSchema);

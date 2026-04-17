@@ -43,6 +43,10 @@ const whiteLableSchema = new mongoose.Schema(
     manager: {
       type: String,
     },
+    publicKey:{
+      type: String,
+      default: null,
+    },
     configDetails: {
       tradingAccLimit: {
         type: Number,
@@ -50,14 +54,6 @@ const whiteLableSchema = new mongoose.Schema(
         },
     },
     managers: {
-      demo: {
-        id: {
-          type: mongoose.Schema.Types.ObjectId,
-          default: () => new mongoose.Types.ObjectId(),
-        },
-        manager: { type: String, default: "" },
-        wrapperUrl: { type: String, default: "" },
-      },
       real: {
         id: {
           type: mongoose.Schema.Types.ObjectId,
@@ -68,9 +64,9 @@ const whiteLableSchema = new mongoose.Schema(
       },
     },
   },
-  { collection: "WhiteLabel" }
+  { collection: "whiteLabel" }
 );
 
-const WhiteLabel = mongoose.model("WhiteLabel", whiteLableSchema);
+const WhiteLabel = mongoose.model("whiteLabel", whiteLableSchema);
 
 export default WhiteLabel;
