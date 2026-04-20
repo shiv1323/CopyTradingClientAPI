@@ -1,10 +1,11 @@
 import express from 'express';
-
+import { healthCheck } from '../controllers/healthController.js';
+import authRoutes from './authRoutes.js';
 const router = express.Router();
+// Health check
+router.get('/health', healthCheck);
 
-/* GET home page. */
-router.get('/', function (req, res, next) {
-  res.render('index', { title: 'Express' });
-});
+// auth routes
+router.use('/auth', authRoutes);
 
 export default router;

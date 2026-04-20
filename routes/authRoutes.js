@@ -6,3 +6,5 @@ import { generateJWTLoginValidation } from '../validations/authValidation.js';
 import { handleValidationErrors } from '../middlewares/validation.js';
 
 router.post('/generate-jwt-login', generateJWTLoginValidation, handleValidationErrors,validateWhiteLabel,verifyRSAToken, generateJWTAndLogin);
+
+export default router;
