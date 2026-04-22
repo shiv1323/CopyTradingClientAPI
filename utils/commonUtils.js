@@ -2,6 +2,8 @@ import moment from "moment-timezone";
 import { decrypt, encryptPasswordForStorage } from "../utils/authUtils.js";
 import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
+import emailTempRepository from "../repositories/emailTempRepository.js";
+import whiteLabelRepository from "../repositories/whiteLabelRepository.js";
 
 import axios from "axios";
 
@@ -324,43 +326,76 @@ export function convertUnixTimestampToISO(timestamp) {
   return date.toISOString();
 }
 
-export const sendEmail = async ({ to, subject, text }) => {
+export const sendCustomEmail = async (
+  whitelabel,
+  eventName,
+  recipients,
+  variables,
+  type = "no-reply",
+  defaultTemplateData = null,
+) => {
   try {
-    // console.log(process.env.SENDGRID_API_KEY);
-    const msg = {
-      to,
-      from: "only4gamingzone@gmail.com",
-      subject,
-      text,
-    };
-    const email = await sgMail.send(msg);
-    // console.log(email);
+    if (!whitelabel) throw new Error("Whitelabel is missing");
+    let [templateData, getWhiteLabelData] = await Promise.all([
+      await emailTempRepository.getRecordsByOptions(
+        { whiteLabel: whitelabel, eventName },
+        "emailBody from",
+      ),
+      await whiteLabelRepository.findWhiteLabelById(whitelabel),
+    ]);
+    let whitelabelName = "";
+    if (getWhiteLabelData) {
+      whitelabelName = templateData?.[0]?.from || getWhiteLabelData?.company;
+    }
+
+    // If no specific template is found for the whitelabel, use the default template
+    if ((!templateData || templateData.length === 0) && defaultTemplateData) {
+      templateData = await emailTempRepository.getRecordsByOptions(
+        { whitelabel: { $exists: false }, eventName },
+        "emailBody",
+      );
+      if (defaultTemplateData) {
+        templateData = [defaultTemplateData];
+      }
+    }
+
+    if (!templateData || templateData.length === 0) {
+      throw new Error(`No email template found for event: ${eventName}`);
+    }
+
+    const formattedEventName = eventName
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+    const { emailBody } = templateData[0];
+
+    const formData = new FormData();
+    formData.append("mailBody", emailBody);
+    formData.append("whitelabel", whitelabelName);
+    formData.append("eventName", formattedEventName);
+    formData.append("variables", JSON.stringify(variables || {}));
+    formData.append("recipients", JSON.stringify(recipients));
+    formData.append("whitelabelId", whitelabel.toString());
+    formData.append("type", type);
+    //console.log(formData);
+
+    const response = await axios.post(
+      `${process.env.ADMIN_SERVER_BASEURL}/email/sendEmail`,
+      formData,
+    );
+    console.log("response", response);
+ 
+    if (response) {
+      console.log("sendEmail has been hit from the helper Function");
+    }
+    return response.data;
   } catch (error) {
-    console.error("Error sending email:", error);
-    throw new Error("Failed to send email");
+    console.log(error);
   }
 };
 
-export const sendSMSWithTwilio = async ({ body, to }) => {
-  try {
-    if (!body) {
-      throw new Error("Message body is required");
-    }
-    if (!to) {
-      throw new Error("Recipient phone number is required");
-    }
-    const message = await twilioClient.messages.create({
-      body: body,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: to,
-    });
 
-    return message;
-  } catch (error) {
-    console.error("Error sending SMS:", error);
-    throw error;
-  }
-};
 
 
 
@@ -487,3 +522,44 @@ export const checkMinimumBalance = (balance, currency, minBalanceOverride = null
       : MIN_BALANCE_REQUIREMENTS[currency.toUpperCase()] || MIN_BALANCE_REQUIREMENTS.USD;
   return balance >= minBalance;
 };
+
+export async function generateUniqueNumericId(
+  model,
+  { field = 'userId', digits = 10, maxAttempts = 25 } = {}
+) {
+  const min = 10 ** (digits - 1);
+  const max = 10 ** digits - 1;
+
+  if (!model?.db?.models) {
+    throw new Error('generateUniqueNumericId: invalid mongoose model provided');
+  }
+
+  // Only check models where the field exists AND is a Number.
+  // This avoids accidentally querying unrelated models where `userId` is an ObjectId
+  // (e.g. `token.userId`) which would cause ObjectId cast errors.
+  const modelsToCheck = Object.values(model.db.models).filter((m) => {
+    const p = m?.schema?.path(field);
+    return p && p.instance === "Number";
+  });
+
+  for (let i = 0; i < maxAttempts; i += 1) {
+    const candidate = crypto.randomInt(min, max + 1);
+
+    const hits = await Promise.all(
+      modelsToCheck.map((m) =>
+        m
+          .findOne({ [field]: candidate })
+          .select('_id')
+          .lean()
+      )
+    );
+
+    if (hits.every((doc) => !doc)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `generateUniqueNumericId: could not generate unique ${field} after ${maxAttempts} attempts`
+  );
+}

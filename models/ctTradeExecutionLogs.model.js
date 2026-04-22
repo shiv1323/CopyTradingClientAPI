@@ -1,19 +1,16 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import {
+  TRADE_EXEC_FINAL_STATUS_ENUM,
+  TRADE_EXEC_STAGE_STATUS_ENUM,
+  TRADE_EXEC_TYPE_ENUM,
+} from '../utils/constant.js';
 
 const StageLogSchema = new mongoose.Schema(
   {
     stage: { type: String, required: true },
     status: {
       type: String,
-      enum: [
-        "PENDING",
-        "PASSED",
-        "FAILED",
-        "DONE",
-        "SENT",
-        "CONFIRMED",
-        "SKIPPED",
-      ],
+      enum: TRADE_EXEC_STAGE_STATUS_ENUM,
       required: true,
     },
     details: { type: mongoose.Schema.Types.Mixed },
@@ -25,9 +22,9 @@ const StageLogSchema = new mongoose.Schema(
 
 const TradeExecutionLogSchema = new mongoose.Schema(
   {
-    whiteLabel: { type: mongoose.Schema.Types.ObjectId, ref: "WhiteLabel" },
-    masterClientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client" },
-    subscriberClientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client" },
+    whiteLabel: { type: mongoose.Schema.Types.ObjectId, ref: 'whiteLabel' },
+    masterClientId: { type: mongoose.Schema.Types.ObjectId, ref: 'clientProfile' },
+    subscriberClientId: { type: mongoose.Schema.Types.ObjectId, ref: 'clientProfile' },
     recordId: { type: String, default: null },
     transactionId: { type: String, required: true, unique: true },
     master: { type: String, index: true },
@@ -35,19 +32,13 @@ const TradeExecutionLogSchema = new mongoose.Schema(
     SYMBOL: { type: String, required: true },
     type: {
       type: String,
-      enum: ["OPEN", "CLOSE", "PARTIAL_CLOSE"],
+      enum: TRADE_EXEC_TYPE_ENUM,
       required: true,
     },
     stages: [StageLogSchema],
     finalStatus: {
       type: String,
-      enum: [
-        "SUCCESS",
-        "FAILED_VALIDATION",
-        "FAILED_VOLUME",
-        "FAILED_MARGIN",
-        "FAILED_RUNTIME",
-      ],
+      enum: TRADE_EXEC_FINAL_STATUS_ENUM,
       required: true,
     },
     startedAt: { type: Date, default: Date.now },
@@ -56,7 +47,7 @@ const TradeExecutionLogSchema = new mongoose.Schema(
     rawTicker: { type: mongoose.Schema.Types.Mixed },
     extra: { type: mongoose.Schema.Types.Mixed },
   },
-  { collection: "CTTradeExecutionLogs", timestamps: true }
+  { collection: 'ctTradeExecutionLogs', timestamps: true }
 );
 
 TradeExecutionLogSchema.index({ subscriberClientId: 1 });
@@ -66,9 +57,9 @@ TradeExecutionLogSchema.index({ symbol: 1 });
 TradeExecutionLogSchema.index({ subscriberClientId: 1, masterClientId: 1 });
 TradeExecutionLogSchema.index({ startedAt: 1, completedAt: 1 });
 TradeExecutionLogSchema.index({
-  "stages.details": "text",
-  details: "text",
-  transactionId: "text",
+  'stages.details': 'text',
+  details: 'text',
+  transactionId: 'text',
 });
 
-export default mongoose.model("CTTradeExecutionLogs", TradeExecutionLogSchema);
+export default mongoose.model('ctTradeExecutionLogs', TradeExecutionLogSchema);

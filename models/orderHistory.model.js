@@ -6,7 +6,7 @@ const orderSchema = new Schema(
   {
     clientId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Client",
+      ref: "clientProfile",
       required: true,
     },
     accountId: { type: String, required: true },
@@ -48,10 +48,10 @@ const orderSchema = new Schema(
     activationPrice: { type: String, default: "0.00000" },
     activationFlags: { type: String, default: "0" },
   },
-  { collection: "OrderHistory", timestamps: true }
+  { collection: "orderHistory", timestamps: true }
 );
 
 orderSchema.index({ deal: 1 }, { unique: true });
-const Order = model("OrderHistory", orderSchema);
+const Order = model("orderHistory", orderSchema);
 
 export default Order;

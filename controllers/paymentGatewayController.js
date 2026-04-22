@@ -7,20 +7,20 @@ import { v4 as uuidv4 } from "uuid";
 import axios from "axios";
 import { generateHmac } from "../utils/paymentgatwayutils.js";
 import paymentGateway from "../models/clientFund/paymentgateway.model.js";
-import { setBalance } from "../controllers/clientFundController/clientFundServices.js";
-import tradingAccountRepository from "../repositories/tradingAccountRepository.js";
 import { createTransactionObject } from "./clientFundController/clientInvestentWalletController.js";
 import clientAccountTransactionHistoryRepository from "../repositories/clientAccountTransactionHistoryRepository.js";
 import accountTransactionModel from "../models/clientFund/accountTransactions.model.js";
 import { sendCustomEmail } from "../utils/commonUtils.js";
 import clientProfileModel from "../models/clientProfile.model.js";
-import whiteLabelRepository from "../repositories/whiteLabelRepository.js";
 import paymentCurrencyRepository from "../repositories/paymentCurrencyRepository.js";
 import paymentGetwayRepository from "../repositories/paymentGetwayRepository.js";
 
 const baseURL = process.env.PAYMENTGATWAY_BASEURL;
 const secretkey = process.env.PAYMENTGATWAY_SECRET_ACCESS_KEY;
 const application_id = process.env.PAYMENTGATWAY_APPLICATION_ID;
+
+
+
 export const GetPaymentMethods = async (req, res) => {
   try {
     const { whiteLabel } = req.user;
@@ -30,7 +30,7 @@ export const GetPaymentMethods = async (req, res) => {
       type
     );
     const formattedData = PaymentMethods.map((item) => {
-      const { ApplicationID, AppSecret, ...restConfig } = item.configuration;
+      const { applicationId, appSecret,baseUrl, ...restConfig } = item.configuration;
       return {
         ...item,
         configuration: restConfig,
@@ -38,8 +38,7 @@ export const GetPaymentMethods = async (req, res) => {
     });
     return res.success(formattedData, "Success", 200);
   } catch (error) {
-    console.error("Error saving login activity:", error);
-    throw new Error("Failed to save login activity.");
+   return res.error(error.message, 500);
   }
 };
 
@@ -130,29 +129,7 @@ const submitTransactionRequest = async (transPayload, signature) => {
   });
 };
 
-const updatePaymentTransaction = async (transferReferenceId, updatedData) => {
-  await paymentGateway.updateOne(
-    { transfer_reference_id: transferReferenceId },
-    { $set: updatedData }
-  );
-  return await paymentGateway.findOne({
-    transfer_reference_id: transferReferenceId,
-  });
-};
 
-const updateTradingAccountBalance = async (tAccount, setAmount, req) => {
-  const tradingAcc = await tradingAccountRepository.getTradingAccountByField({
-    Login: tAccount,
-  });
-  const previousWalletBalance = tradingAcc[0].Balance;
-
-  await setBalance(tAccount, setAmount, req);
-
-  return {
-    previousWalletBalance,
-    currentBalance: parseInt(previousWalletBalance) + parseInt(setAmount),
-  };
-};
 
 const saveTransactionReport = async (reportData) => {
   const transactionReport = createTransactionObject(reportData);

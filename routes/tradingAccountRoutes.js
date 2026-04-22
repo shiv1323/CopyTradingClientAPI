@@ -7,19 +7,18 @@ import { initiateMT5PasswordChange,getTrAccountLimitForClient, verifyAndChangeMT
 
 const router = express.Router();
 
-router.post('/createTradingAccount',createTradeAccValidationRules(),validateReq,authHandler,createTradingAccount);
-router.post('/getClientTradingAccounts',authHandler,getTradingAccount);
-router.post('/setBalance',setBalanceValidationRules(),validateReq,authHandler,setBalance);
-router.post('/archiveAccount',validateArchiveAccount(),validateReq,authHandler,archiveAccount);
-router.post('/restoreArchivedAccount',authHandler,restoreArchivedAccount);
-router.post('/initiateMT5AccountPasswordChange',validateInitiateMT5PasswordChange(),validateReq,authHandler,initiateMT5PasswordChange);
-router.post('/verifyMT5AccountPasswordChange',validateVerifyAndChangeMT5Password(),validateReq,authHandler,verifyAndChangeMT5Password);
-router.post('/get_t_accountinfo',getTrAccountInfoRules(), validateReq, authHandler,getAndUpdateTAccountInfo)
-router.post('/createClient',createClientValidationRules(),validateReq,authHandler,createClient);
-router.post('/updateLeverage',updLeverageValidationRules(),validateReq,authHandler,updateTrAccountLeverage)
-router.post("/getT_accountLimitStats", authHandler, getTrAccountLimitForClient);
-router.get('/getIncreaseRequests',authHandler,checkRequest);
-router.post('/raiseRequest_IncTrAcc',increaseLimitValidationRules(),validateReq,authHandler,raiseIncreaseRequest);
-router.post('/renameTradingAccname',renameTrAccountRules(), validateReq, authHandler,renameTradingAcc)
+router.use(authHandler);
+router.post('/createTradingAccount',createTradeAccValidationRules(),validateReq,createTradingAccount);
+router.get('/getClientTradingAccounts',getTradingAccount);
+router.post('/setBalance',setBalanceValidationRules(),validateReq,setBalance);
+router.post('/initiateMT5AccountPasswordChange',validateInitiateMT5PasswordChange(),validateReq,initiateMT5PasswordChange);
+router.post('/verifyMT5AccountPasswordChange',validateVerifyAndChangeMT5Password(),validateReq,verifyAndChangeMT5Password);
+router.get('/get_t_accountinfo',getTrAccountInfoRules(), validateReq, getAndUpdateTAccountInfo)
+router.post('/createClient',createClientValidationRules(),validateReq,createClient);
+router.post('/updateLeverage',updLeverageValidationRules(),validateReq,updateTrAccountLeverage)
+router.post("/getT_accountLimitStats", getTrAccountLimitForClient);
+router.get('/getIncreaseRequests',checkRequest);
+router.post('/raiseRequest_IncTrAcc',increaseLimitValidationRules(),validateReq,raiseIncreaseRequest);
+router.post('/renameTradingAccname',renameTrAccountRules(), validateReq, renameTradingAcc)
 
 export default router;

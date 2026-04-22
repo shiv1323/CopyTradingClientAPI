@@ -3,15 +3,17 @@ import { getClosedOrderDetailsValidationRules, getClosedOrderValidationRules, ge
 import { validateReq } from "../validations/index.js";
 import { authHandler } from "../middlewares/authHandler.js";
 import { getClosedOrders, getClosedOrdersDetails, getOpenOrders, getReportOverview } from "../controllers/clientReportController.js";
+import { getSummaryReport } from "../controllers/performanceSummaryController.js";
 
 
 const router = express.Router();
 
-
-router.post('/getOpenOrders',getOrderValidationRules(),validateReq,authHandler,getOpenOrders)
-router.post('/getClosedOrders',authHandler,getClosedOrders)
-router.post('/getClosedOrders/details',getClosedOrderDetailsValidationRules(),validateReq,authHandler,getClosedOrdersDetails)
-router.post('/getReportOverview',getReportOverviewValidationRules(),validateReq,authHandler,getReportOverview)
+router.use(authHandler);
+router.get('/getOpenOrders',getOrderValidationRules(),validateReq,getOpenOrders)
+router.get('/getClosedOrders',getClosedOrders)
+router.get('/getClosedOrders/details',getClosedOrderDetailsValidationRules(),validateReq,getClosedOrdersDetails)
+router.get('/getReportOverview',getReportOverviewValidationRules(),validateReq,getReportOverview)
+router.get("/getClientOrderSummary",getSummaryReport)
 
 // getClosedOrderValidationRules(),validateReq,
 export default router;

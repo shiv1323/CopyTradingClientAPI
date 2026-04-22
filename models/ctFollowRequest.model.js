@@ -1,24 +1,25 @@
-import mongoose from "mongoose";
-import { getUTCTime } from "../utils/commonUtils.js";
- 
+import mongoose from 'mongoose';
+import { getUTCTime } from '../utils/commonUtils.js';
+import { CT_FOLLOW_REQUEST_STATUS_ENUM, TRADING_CONDITION_ENUM } from '../utils/constant.js';
+
 const { Schema, model, Types } = mongoose;
- 
+
 const CTFollowRequestSchema = new Schema(
   {
     whiteLabel: {
       type: Types.ObjectId,
-      ref: "WhiteLabel",
+      ref: 'whiteLabel',
       required: true,
     },
     followerAccount: {
       type: Types.ObjectId,
       required: true,
-      ref: "Client",
+      ref: 'clientProfile',
     },
     masterAccount: {
       type: Types.ObjectId,
       required: true,
-      ref: "Client",
+      ref: 'clientProfile',
     },
     followerTradingMId: {
       type: String,
@@ -30,7 +31,7 @@ const CTFollowRequestSchema = new Schema(
     },
     status: {
       type: Number,
-      enum: [0, 1, 2, 3, 4, 5], // 0: PENDING, 1: Approved by Master, 2: Approved by Admin, 3:Rejected By Master, 4: Rejected By Admin, 5: Invalidated Request
+      enum: CT_FOLLOW_REQUEST_STATUS_ENUM,
       default: 0,
     },
     requestedAt: {
@@ -56,12 +57,12 @@ const CTFollowRequestSchema = new Schema(
     },
     tradingCondition: {
       type: String,
-      enum: ["EQUITY", "BALANCE", "FIXED", "VOLUME_PERCENT"],
+      enum: TRADING_CONDITION_ENUM,
       required: true,
     },
     ratio: {
       type: String,
-      default: "100",
+      default: '100',
     },
     remark: {
       type: String,
@@ -69,10 +70,10 @@ const CTFollowRequestSchema = new Schema(
     },
     isHidden: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
-  { collection: "CTFollowRequests" }
+  { collection: 'ctFollowRequests' }
 );
 CTFollowRequestSchema.index(
   {
@@ -89,5 +90,5 @@ CTFollowRequestSchema.index(
     },
   }
 );
- 
-export default model("CTMasterFollowRequest", CTFollowRequestSchema);
+
+export default model('ctFollowRequests', CTFollowRequestSchema);

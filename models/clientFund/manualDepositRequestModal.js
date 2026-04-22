@@ -5,17 +5,13 @@ const RequestSchema = new mongoose.Schema(
   {
     clientId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "ClientProfile",
+      ref: "clientProfile",
       required: true,
     },
     whiteLabel: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "WhiteLabel",
+      ref: "whiteLabel",
       required: true,
-    },
-    adminId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
     },
     type: {
       type: String,
@@ -90,12 +86,12 @@ const RequestSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    collection: "ManualDepositRequest",
+    collection: "manualDepositRequests",
   }
 );
 
 const ManualDepositRequest = mongoose.model(
-  "ManualDepositRequest",
+  "manualDepositRequests",
   RequestSchema
 );
 

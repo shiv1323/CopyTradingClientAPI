@@ -1,14 +1,6 @@
 import { validationResult } from 'express-validator';
 export * from './clientValidation.js';
-export * from './clientDocValidation.js';
 export * from './tradingAccValidation.js'
-export * from './withdrawlRequestValidation.js'
-export * from './walletTransactionValidation.js'
-export * from './performanceSummaryValidation.js'
-export * from './clientDocValidation.js'
-export * from './paymentGatewayValidation.js'
-export * from './copyTradingRequestValidation.js'
-export * from './pamValidation.js'
 
 export const validateReq = (req, res, next) => {
     const errors = validationResult(req);

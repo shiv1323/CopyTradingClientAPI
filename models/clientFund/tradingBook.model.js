@@ -5,7 +5,7 @@ const tradeSchema = new mongoose.Schema(
   {
     tradingAccountId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "TradingAccount",
+      ref: "tradingAccount",
       required: true,
     },
     market: { type: String, required: true },
@@ -17,7 +17,7 @@ const tradeSchema = new mongoose.Schema(
     status: { type: String, enum: ["Open", "Closed"], default: "Open" },
     createdAt: { type: Date, default: getUTCTime },
   },
-  { collection: "TradingBook" }
+  { collection: "tradingBook" }
 );
 
-export const Trade = mongoose.model("TradingBook", tradeSchema);
+export const Trade = mongoose.model("tradingBook", tradeSchema);

@@ -177,7 +177,7 @@ export const increaseLimitValidationRules = () => {
 
 export const getTrAccountInfoRules = () => {
   return [
-    body("loginId")
+    query("loginId")
       .notEmpty()
       .withMessage("loginId is required")
       .isString()
@@ -205,10 +205,5 @@ export const renameTrAccountRules = () => {
       .trim()
       .isLength({ min: 3, max: 50 })
       .withMessage("newAccName must be between 3 and 50 characters"),
-
-    query("type")
-      .optional()
-      .isIn(["real", "demo"])
-      .withMessage("type must be either 'real' or 'demo'"),
   ];
 };

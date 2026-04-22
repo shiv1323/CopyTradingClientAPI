@@ -1,10 +1,12 @@
 import { privateKey } from "../config/keyLoader.js";
 import jwt from 'jsonwebtoken';
+import dotenv from "dotenv";
 
-JWT_SECRET = process.env.JWT_SECRET;
-JWT_ISSUER = process.env.JWT_ISSUER;
-JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY;
-JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY;
+dotenv.config();
+const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_ISSUER = process.env.JWT_ISSUER;
+const JWT_REFRESH_EXPIRY = process.env.JWT_REFRESH_EXPIRY;
+const JWT_ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY;
 
 export const generateRSAToken = (payload, expiresIn = "5m") => {
   return jwt.sign(payload, privateKey, {

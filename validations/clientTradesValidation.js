@@ -1,7 +1,7 @@
-import { body } from "express-validator";
+import { body, query } from "express-validator";
 export const getOrderValidationRules = () => {
     return [
-      body("tAccountNo")
+      query("tAccountNo")
         .notEmpty()
         .withMessage("Account Number is required")
         .isString()
@@ -11,17 +11,17 @@ export const getOrderValidationRules = () => {
 
 export const getClosedOrderValidationRules = ()=>{
     return [
-        body("tAccountNo")
+        query("tAccountNo")
           .notEmpty()
           .withMessage("Account Number is required")
           .isString()
           .withMessage("Invalid Account Number format"),
-          body("fromDate")
+          query("fromDate")
           .notEmpty()
           .withMessage("From Date is required")
           .matches(/^\d{2}\.\d{2}\.\d{4}$/)
         .withMessage('Date must be in the format DD.MM.YYYY'),
-          body("toDate")
+          query("toDate")
           .notEmpty()
           .withMessage("From Date is required")
           .matches(/^\d{2}\.\d{2}\.\d{4}$/)
@@ -32,12 +32,12 @@ export const getClosedOrderValidationRules = ()=>{
 
 export const getReportOverviewValidationRules = ()=>{
   return [
-        body("fromDate")
+        query("fromDate")
         .notEmpty()
         .withMessage("From Date is required")
         .matches(/^\d{2}\.\d{2}\.\d{4}$/)
       .withMessage('Date must be in the format DD.MM.YYYY'),
-        body("toDate")
+        query("toDate")
         .notEmpty()
         .withMessage("From Date is required")
         .matches(/^\d{2}\.\d{2}\.\d{4}$/)
@@ -47,12 +47,12 @@ export const getReportOverviewValidationRules = ()=>{
 
 export const getClosedOrderDetailsValidationRules = () => {
   return [
-    body("tAccountNo")
+    query("tAccountNo")
       .notEmpty()
       .withMessage("Account Number is required")
       .isString()
       .withMessage("Invalid Account Number format"),
-      body("positionID")
+      query("positionID")
       .notEmpty()
       .withMessage("positionID is required")
       .isString()

@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import { COPY_MODE_ENUM, COPY_REASON_ENUM } from '../utils/constant.js';
 
 const RuleSchema = new mongoose.Schema({
   symbols: {
@@ -12,7 +13,7 @@ const RuleSchema = new mongoose.Schema({
   copyReason: {
     type: [String],
     default: [],
-    enum: ["trader", "manager", "expert"],
+    enum: COPY_REASON_ENUM,
   },
   minVolume: {
     type: Number,
@@ -45,7 +46,7 @@ const RuleSchema = new mongoose.Schema({
   volumeRule: {
     mode: {
       type: String,
-      enum: ["BALANCE", "EQUITY", "VOLUME_PERCENT", "FIXED"],
+      enum: COPY_MODE_ENUM,
       default: null,
     },
     value: {
@@ -66,7 +67,7 @@ const RuleSchema = new mongoose.Schema({
 const FollowerSchema = new mongoose.Schema({
   id: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Client",
+    ref: 'clientProfile',
   },
   loginId: {
     type: String,
@@ -87,7 +88,7 @@ const FollowerSchema = new mongoose.Schema({
   isHidden: {
     type: Boolean,
     default: false,
-  }
+  },
 });
 
 const MasterSchema = new mongoose.Schema(
@@ -96,13 +97,13 @@ const MasterSchema = new mongoose.Schema(
     //   type: mongoose.Schema.Types.ObjectId,
     //   required: true,
     // },
-    whiteLabel:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'WhiteLabel',
+    whiteLabel: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'whiteLabel',
     },
     masterAccountId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Client"
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'clientProfile',
     },
     loginId: {
       type: String,
@@ -112,11 +113,11 @@ const MasterSchema = new mongoose.Schema(
       type: [FollowerSchema],
       default: [],
     },
-    masterSL:{
+    masterSL: {
       type: Number,
       default: null,
     },
-    masterTP:{
+    masterTP: {
       type: Number,
       default: null,
     },
@@ -125,7 +126,7 @@ const MasterSchema = new mongoose.Schema(
       default: true,
     },
   },
-  { collection: "CTMasters" }
+  { collection: 'ctMaster' }
 );
 
-export default mongoose.model("Master", MasterSchema);
+export default mongoose.model('ctMaster', MasterSchema);
