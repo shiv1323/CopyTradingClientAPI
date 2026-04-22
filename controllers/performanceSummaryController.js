@@ -5,7 +5,7 @@ import { catchAsync } from "../middlewares/catchAsync.js";
 import orderHistoryRepository from "../repositories/orderHistoryRepository.js";
 import tradeReportRepository from "../repositories/tradeReportRepository.js";
 import moment from "moment";
-import { postReqMT5Server } from "../utils/mt5ServerUtils.js";
+import { postReqMT5Server } from "../wrapperConfig/mt5WrapperUtils.js";
 import { MTAPI_ROUTES } from "../config/mtTerminalConstanats.js";
 
 
@@ -13,8 +13,8 @@ import { MTAPI_ROUTES } from "../config/mtTerminalConstanats.js";
 export const getTrAccountDdown = asyncHandler(async (req, res) => {
   const { id, whiteLabel, userId } = req.user;
   const filter = {
-    WhiteLabel: whiteLabel,
-    ClientId: id,
+    whiteLabel: whiteLabel,
+    clientId: id,
   };
   const trAccountDdown =
     await tradingAccountRepository.getTradingAccountByField(filter);
@@ -52,21 +52,20 @@ const getUnrealisedPLandEquity = async(clientId,accountId,user,fromDate,toDate)=
     const toDateUn = Math.floor(new Date(toDate).getTime() / 1000);
     // console.log(fromDateUn,toDateUn);
 
-    const filter = {ClientId : new mongoose.Types.ObjectId(clientId),
-      ManagerType :"real"}
+    const filter = {clientId : new mongoose.Types.ObjectId(clientId),
+      managerType :"real"}
       if(accountId){
-        filter.Login = accountId
+        filter.login = accountId
       }
-      // console.log(filter);
+
     const getTradingAcc = await tradingAccountRepository.getAccByOptions(filter);
-    // console.log(getTradingAcc);
     const openOrderArray = []
     if (getTradingAcc?.length) {
       const promises = getTradingAcc.map(async (account) => {
-        equity =parseFloat(equity)+parseFloat(account?.Equity)
+        equity =parseFloat(equity)+parseFloat(account?.equity)
         const answer = await postReqMT5Server(
           MTAPI_ROUTES.GET_POSITION_INFO,
-          { login: account?.Login },
+          { login: account?.login },
           user,
           "real"
         );
@@ -81,7 +80,7 @@ const getUnrealisedPLandEquity = async(clientId,accountId,user,fromDate,toDate)=
       openOrderArray.push(...results.flat());
       //console.log(openOrderArray)
       openOrderArray.map((order)=>{
-        if(order?.TimeCreate >= fromDateUn && order?.TimeCreate <= toDateUn){
+        if(order?.timeCreate >= fromDateUn && order?.timeCreate <= toDateUn){
           profitLoss = parseFloat((profitLoss + parseFloat(order?.Profit)).toFixed(2))
         }
       })
@@ -97,8 +96,8 @@ const getUnrealisedPLandEquity = async(clientId,accountId,user,fromDate,toDate)=
 }
 
 export const getSummaryReport = asyncHandler(async (req, res) => {
-  const { id, whiteLabel, userId } = req.user;
-  let { accountId , fromDate, toDate } = req.body;
+  const { id, whiteLabel } = req.user;
+  let { accountId , fromDate, toDate } = req.query;
   // let from = new Date(fromDate);
   // let to = new Date(toDate);
   // to.setDate(to.getDate() + 1);

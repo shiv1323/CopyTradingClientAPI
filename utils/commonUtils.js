@@ -1,16 +1,12 @@
 import moment from "moment-timezone";
 import { decrypt, encryptPasswordForStorage } from "../utils/authUtils.js";
-import nodemailer from "nodemailer";
 import sgMail from "@sendgrid/mail";
 import crypto from "crypto";
 import emailTempRepository from "../repositories/emailTempRepository.js";
-import axios from "axios";
 import whiteLabelRepository from "../repositories/whiteLabelRepository.js";
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-import FormData from "form-data";
-import twilioConfigRepository from "../repositories/twilioConfigRepository.js";
-import twilioModel from "../models/twilio.model.js";
-import mongoose from "mongoose";
+
+import axios from "axios";
+
 
 
 export const COUNTRY_TO_ISO3 = {
@@ -323,75 +319,12 @@ export const validateEncryptedPasswordFormat = (password) => {
   return true;
 };
 
-export const sendPasswordResetEmail = async (email, resetLink) => {
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    auth: {
-      user: "codehelpdummy1@gmail.com",
-      pass: "dzgvtybtweasxrqd",
-    },
-  });
 
-  const mailOptions = {
-    from: "codehelpdummy1@gmail.com",
-    to: email,
-    subject: "Password Reset Request",
-    html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2>Password Reset Request</h2>
-        <p>You have requested to reset your password. Click the link below to reset:</p>
-        <p><a href="${resetLink}" style="background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a></p>
-        <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
-        <p>This link will expire in 1 hour.</p>
-      </div>
-    `,
-  };
-
-  await transporter.sendMail(mailOptions);
-};
 
 export function convertUnixTimestampToISO(timestamp) {
   const date = new Date(timestamp * 1000);
   return date.toISOString();
 }
-
-export const sendEmail = async ({ to, subject, text }) => {
-  try {
-    // console.log(process.env.SENDGRID_API_KEY);
-    const msg = {
-      to,
-      from: "only4gamingzone@gmail.com",
-      subject,
-      text,
-    };
-    const email = await sgMail.send(msg);
-    // console.log(email);
-  } catch (error) {
-    console.error("Error sending email:", error);
-    throw new Error("Failed to send email");
-  }
-};
-
-export const sendSMSWithTwilio = async ({ body, to }) => {
-  try {
-    if (!body) {
-      throw new Error("Message body is required");
-    }
-    if (!to) {
-      throw new Error("Recipient phone number is required");
-    }
-    const message = await twilioClient.messages.create({
-      body: body,
-      from: process.env.TWILIO_PHONE_NUMBER,
-      to: to,
-    });
-
-    return message;
-  } catch (error) {
-    console.error("Error sending SMS:", error);
-    throw error;
-  }
-};
 
 export const sendCustomEmail = async (
   whitelabel,
@@ -399,45 +332,43 @@ export const sendCustomEmail = async (
   recipients,
   variables,
   type = "no-reply",
-  defaultTemplateData = null
+  defaultTemplateData = null,
 ) => {
   try {
     if (!whitelabel) throw new Error("Whitelabel is missing");
-    // console.log("whitelabel:", whitelabel);
     let [templateData, getWhiteLabelData] = await Promise.all([
       await emailTempRepository.getRecordsByOptions(
-        { whitelabel: whitelabel, eventName },
-        "emailBody from"
+        { whiteLabel: whitelabel, eventName },
+        "emailBody from",
       ),
       await whiteLabelRepository.findWhiteLabelById(whitelabel),
     ]);
-    // console.log(getWhiteLabelData);
     let whitelabelName = "";
     if (getWhiteLabelData) {
       whitelabelName = templateData?.[0]?.from || getWhiteLabelData?.company;
     }
+
     // If no specific template is found for the whitelabel, use the default template
-    if (!templateData || templateData.length === 0) {
+    if ((!templateData || templateData.length === 0) && defaultTemplateData) {
       templateData = await emailTempRepository.getRecordsByOptions(
         { whitelabel: { $exists: false }, eventName },
-        "emailBody"
+        "emailBody",
       );
+      if (defaultTemplateData) {
+        templateData = [defaultTemplateData];
+      }
     }
-    // console.log(templateData);
-    if ((!templateData || templateData.length === 0) && defaultTemplateData) {
-      templateData = [defaultTemplateData];
-      // console.log(`Using provided default template for event: ${eventName}`);
-    } else if (!templateData || templateData.length === 0) {
+
+    if (!templateData || templateData.length === 0) {
       throw new Error(`No email template found for event: ${eventName}`);
     }
-    // console.log(templateData);
 
     const formattedEventName = eventName
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ");
+
     const { emailBody } = templateData[0];
-    // console.log(emailBody);
 
     const formData = new FormData();
     formData.append("mailBody", emailBody);
@@ -447,17 +378,17 @@ export const sendCustomEmail = async (
     formData.append("recipients", JSON.stringify(recipients));
     formData.append("whitelabelId", whitelabel.toString());
     formData.append("type", type);
-    //  console.log(formData);
+    //console.log(formData);
 
     const response = await axios.post(
-      `${process.env.ADMIN_SERVER_BASEURL}/customTemp/sendEmail`,
-      formData
+      `${process.env.ADMIN_SERVER_BASEURL}/email/sendEmail`,
+      formData,
     );
-    // const response = await axios.post(
-    //   "http://localhost:5001/api/customTemp/sendEmail",
-    //   formData
-    // );
-    // console.log(response);
+    console.log("response", response);
+ 
+    if (response) {
+      console.log("sendEmail has been hit from the helper Function");
+    }
     return response.data;
   } catch (error) {
     console.log(error);
@@ -465,20 +396,8 @@ export const sendCustomEmail = async (
 };
 
 
-export const checkTwilioAvailability = async(whitelabel)=>{
-  try{
-    const answer = await twilioConfigRepository.getTwilioConfig({whiteLabel : whitelabel,
-    isActive : true});
-    if(answer.length>0){
-      return true;
-    }
-    return false;
-  }
-  catch(error){
-    console.log(error)
-    return false;
-  }
-}
+
+
 
 export const removeDiffFromTimestamp = (timestamp) => {
   let date;
@@ -603,3 +522,44 @@ export const checkMinimumBalance = (balance, currency, minBalanceOverride = null
       : MIN_BALANCE_REQUIREMENTS[currency.toUpperCase()] || MIN_BALANCE_REQUIREMENTS.USD;
   return balance >= minBalance;
 };
+
+export async function generateUniqueNumericId(
+  model,
+  { field = 'userId', digits = 10, maxAttempts = 25 } = {}
+) {
+  const min = 10 ** (digits - 1);
+  const max = 10 ** digits - 1;
+
+  if (!model?.db?.models) {
+    throw new Error('generateUniqueNumericId: invalid mongoose model provided');
+  }
+
+  // Only check models where the field exists AND is a Number.
+  // This avoids accidentally querying unrelated models where `userId` is an ObjectId
+  // (e.g. `token.userId`) which would cause ObjectId cast errors.
+  const modelsToCheck = Object.values(model.db.models).filter((m) => {
+    const p = m?.schema?.path(field);
+    return p && p.instance === "Number";
+  });
+
+  for (let i = 0; i < maxAttempts; i += 1) {
+    const candidate = crypto.randomInt(min, max + 1);
+
+    const hits = await Promise.all(
+      modelsToCheck.map((m) =>
+        m
+          .findOne({ [field]: candidate })
+          .select('_id')
+          .lean()
+      )
+    );
+
+    if (hits.every((doc) => !doc)) {
+      return candidate;
+    }
+  }
+
+  throw new Error(
+    `generateUniqueNumericId: could not generate unique ${field} after ${maxAttempts} attempts`
+  );
+}

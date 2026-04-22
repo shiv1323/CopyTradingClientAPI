@@ -2,7 +2,7 @@ import clientProfileRepository from "../../repositories/clientProfileRepository.
 import clientAccountTransactionHistoryRepository from "../../repositories/clientAccountTransactionHistoryRepository.js";
 import tradingAccountRepository from "../../repositories/tradingAccountRepository.js";
 import mongoose from "mongoose";
-import { postReqMT5Server } from "../../utils/mt5ServerUtils.js";
+import { postReqMT5Server } from "../../wrapperConfig/mt5WrapperUtils.js";
 import { MTAPI_ROUTES } from "../../config/mtTerminalConstanats.js";
 import { processTAccountData } from "../tradingAccountController.js";
 import { convertCurrency } from "../../utils/commonUtils.js";

@@ -1,42 +1,13 @@
 import mongoose from "mongoose";
 import { getUTCTime } from "../../utils/commonUtils.js";
-import { v4 as uuidv4 } from "uuid";
+import {
+  ACCOUNT_TYPE,
+  PAYMENT_STATUS,
+  TRANSACTION_STATUSES,
+  TRANSACTION_TYPES,
+  VerificationStatus, 
+} from "../../utils/constant.js";
 
-export const VerificationStatus = Object.freeze({
-  PENDING: "PENDING",
-  COMPLETED: "COMPLETED",
-  FAILED: "FAILED",
-});
-
-export const PAYMENT_STATUS = Object.freeze({
-  DEPOSITE: "DEPOSIT",
-  WITHDRAWL: "WITHDRAWAL",
-  INTERNAL_TRANSFER: "INTERNAL_TRANSFER",
-});
-
-const TRANSACTION_TYPES = Object.freeze({
-  DEPOSIT: "DEPOSIT",
-  WITHDRAWAL: "WITHDRAWAL",
-  CREDIT: "CREDIT",
-  DEBIT: "DEBIT",
-  TRANSFER: "TRANSFER",
-  BONUS: "BONUS",
-  CORRECTION: "CORRECTION",
-  REVERSAL: "REVERSAL",
-});
-
-const TRANSACTION_STATUSES = Object.freeze({
-  INITIATED: "INITIATED",
-  PENDING: "PENDING",
-  COMPLETED: "COMPLETED",
-  FAILED: "FAILED",
-  REVERSED: "REVERSED",
-});
-
-const ACCOUNT_TYPE = Object.freeze({
-  WALLET: "WALLET",
-  TRADING_ACCOUNT: "TRADING",
-});
 
 const transactionSchema = new mongoose.Schema(
   {
@@ -46,7 +17,6 @@ const transactionSchema = new mongoose.Schema(
     },
     transactionId: {
       type: String,
-      // default: uuidv4,
       required: true,
     },
     parentTransactionId: {
@@ -74,33 +44,32 @@ const transactionSchema = new mongoose.Schema(
         required: true,
       },
       id: {
-        type: String, 
+        type: String,
         required: true,
       },
     },
     toAccount: {
       type: {
-        type: String, 
+        type: String,
         required: true,
       },
       id: {
-        type: String, 
+        type: String,
         required: true,
       },
     },
     externalDestination: {
-      type: String, 
+      type: String,
       default: null,
       maxlength: 100,
     },
-    transactionHash:{
+    transactionHash: {
       type: String,
       default: null,
     },
     previousBal: {
       type: Number,
       required: false,
-      // min: [0.0, "Amount must be greater than zero"],
       default: null,
     },
     amount: {
@@ -148,23 +117,6 @@ const transactionSchema = new mongoose.Schema(
     versionKey: false,
   }
 );
-transactionSchema.pre("save", function (next) {
-  //   if (!this.destinationAccountId && !this.externalDestination) {
-  //     return next(
-  //       new Error('Either destinationAccountId or externalDestination must be provided.')
-  //     );
-  //   }
-
-  //   if (this.destinationAccountId && this.externalDestination) {
-  //     return next(
-  //       new Error('Only one of destinationAccountId or externalDestination can be provided.')
-  //     );
-  //   }
-  // if (!this.transactionId) {
-  //   this.transactionId = crypto.randomBytes(8).toString("hex").toUpperCase();
-  // }
-  next();
-});
 
 const Transaction = mongoose.model("clientLedger", transactionSchema);
 

@@ -1,41 +1,58 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+import express from 'express';
+import env from './config/env.js';
+import helmet from 'helmet';
+import cors from 'cors';
+import morgan from 'morgan';
+import responseHandler from './middlewares/responseHandler.js';
+import { notFoundMiddleware } from './middlewares/notFoundHandler.js';
+import { errorHandler } from './middlewares/errorHandler.js';
+import indexRouter from './routes/index.js';
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const app = express();
 
-var app = express();
+const parsedCorsOrigins = (env.CORS_ORIGIN || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow non-browser clients / same-origin (no Origin header)
+    if (!origin) return callback(null, true);
 
-app.use(logger('dev'));
+    // If CORS_ORIGIN is unset, default to allowing all origins in development.
+    if (parsedCorsOrigins.length === 0) return callback(null, true);
+
+    // If configured as "*", reflect the requesting origin (works with credentials).
+    if (parsedCorsOrigins.includes('*')) return callback(null, true);
+
+    if (parsedCorsOrigins.includes(origin)) return callback(null, true);
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+};
+
+// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(helmet()); // Secure HTTP headers
+app.use(cors(corsOptions)); // Enable CORS
+app.options('*', cors(corsOptions));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// to trust the ip
+app.set('trust proxy', 2);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+if (env.NODE_ENV !== 'production') {
+  app.use(morgan('dev'));
+}
+app.use(responseHandler);
+app.use('/api/v1',  indexRouter);
+// Handle 404 (non-existent routes)
+app.use(notFoundMiddleware);
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+// Error Handling Middleware
+app.use(errorHandler);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-module.exports = app;
+export default app;

@@ -11,7 +11,7 @@ const CtOrderSchema = new Schema(
     },
     whiteLabel: {
       type: Types.ObjectId,
-      ref: "WhiteLabel",
+      ref: "whiteLabel",
       required: true,
     },
     followerLogin: {
@@ -23,15 +23,28 @@ const CtOrderSchema = new Schema(
       type: Number,
       required: true,
     },
+    masterPosId: {
+      type: Number,
+      required: true,
+    },
+    orderType: {
+      type: String,
+      required: true,
+    },
+    symbol: {
+      type: String,
+      required: true,
+    }
   },
   {
     timestamps: true,
-    collection: "CTOrders",
+    collection: "ctOrders",
   }
 );
 
-CtOrderSchema.index({ followerLogin: 1, positionId: 1 }, { unique: true });
 
-const CtOrders = model("CtOrders", CtOrderSchema);
+// CtOrderSchema.index({ followerLogin: 1, positionId: 1 }, { unique: true });
+
+const CtOrders = model("ctOrders", CtOrderSchema);
 
 export default CtOrders;

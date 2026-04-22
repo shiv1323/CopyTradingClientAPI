@@ -6,7 +6,7 @@ import clientProfileRepository from "../repositories/clientProfileRepository.js"
 import clientProfileModel from "../models/clientProfile.model.js";
 import whiteLabelRepository from "../repositories/whiteLabelRepository.js";
 import { convertUnixTimestampToISO } from "../utils/commonUtils.js";
-import { postReqMT5Server } from "../utils/mt5ServerUtils.js";
+import { postReqMT5Server } from "../wrapperConfig/mt5WrapperUtils.js";
 import {
   encrypt,
   decrypt,
@@ -21,17 +21,17 @@ import { sendCustomEmail } from "../utils/commonUtils.js";
 const getGroupName = async (groupId, whiteLabel) => {
   try {
     const options = {
-      WhiteLabel: new mongoose.Types.ObjectId(whiteLabel),
+      whiteLabel: new mongoose.Types.ObjectId(whiteLabel),
       _id: new mongoose.Types.ObjectId(groupId),
     };
     const checkGroupName = await forexGroupRepository.findGroupByOptions(
       options,
-      " Group GroupName"
+      "group groupName"
     );
     if (checkGroupName?.length > 0) {
       return {
-        name: checkGroupName?.[0]?.Group,
-        displayName: checkGroupName?.[0]?.GroupName,
+        name: checkGroupName?.[0]?.group,
+        displayName: checkGroupName?.[0]?.groupName,
       };
     } else {
       return null;
@@ -70,7 +70,7 @@ const bindTradingAccounts = async (
         //console.log(bindedLoginIds)
         if (bindedLoginIds.length > 0) {
           const updateAccs = await tradingAccountRepository.updateManyRecord(
-            { Login: { $in: bindedLoginIds } },
+            { login: { $in: bindedLoginIds } },
             { $set: { IsBinded: true } }
           );
         }
@@ -89,44 +89,31 @@ const bindTradingAccounts = async (
 
 export const createTradingAccount = asyncHandler(async (req, res) => {
   try {
-    const { id, email, whiteLabel, adminId, tradingAccLimit = 3 } = req?.user;
-    const { pass, leverage, balance, name, groupId, groupType, currency } =
+    const { id, email, whiteLabel, tradingAccLimit = 3 } = req?.user;
+    const { pass, leverage, balance, name, groupId, currency } =
       req?.body;
     const { type = "real" } = req.query;
-    // console.log(adminId);
-    // const checkTradingAccountLimit =
-    //   await trAccountLimitRepository.getMaxLimitForTrAccounts(id);
-    // if (
-    //   checkTradingAccountLimit?.approvedMaxAccounts >=
-    //   checkTradingAccountLimit?.currentAccounts
-    // ) {
-    //   return res.error(
-    //     "Trading Accounts Limit Reached! Please contact support OR Request For Increase Limit",
-    //     400
-    //   );
-    // }
+
     const countTradingAcc = await tradingAccountRepository.countRecords({
-      ClientId: new mongoose.Types.ObjectId(id),
-      ManagerType: type,
+      clientId: new mongoose.Types.ObjectId(id),
+      managerType: type,
     });
     if (countTradingAcc >= tradingAccLimit) {
       return res.error(
-        type === "demo"
-          ? `Only ${tradingAccLimit} Demo Accounts Allowed`
-          : "Trading Accounts Limit Reached! Please contact support OR Request For Increase Limit",
+        "Trading Accounts Limit Reached! Please contact support OR Request For Increase Limit",
         400
       );
     }
-    const checkGroup = await getGroupName(groupId, whiteLabel);
+    // const checkGroup = await getGroupName(groupId, whiteLabel);
     let groupName = "";
-    if (!checkGroup?.name) {
-      return res.error(
-        `Failed to create trading account: Account Name Not Valid`,
-        500
-      );
-    } else {
-      groupName = checkGroup?.name;
-    }
+    // if (!checkGroup?.name) {
+    //   return res.error(
+    //     `Failed to create trading account: Account Name Not Valid`,
+    //     500
+    //   );
+    // } else {
+    //   groupName = checkGroup?.name;
+    // }
     const createPayload = {
       clientId: id,
       email,
@@ -134,127 +121,55 @@ export const createTradingAccount = asyncHandler(async (req, res) => {
       pass: encryptTextMt5(decrypt(pass)),
       leverage,
       groupName,
-      groupAccountType: checkGroup?.displayName,
-      accountType: groupType === "REAL" ? 1 : 2,
+      groupAccountType: "Test Dev\\demo Elite Dev 2",
+      accountType: 1,
       currency: currency || "USD",
       whiteLabel: whiteLabel,
       groupId,
-      adminId: new mongoose.Types.ObjectId(adminId),
     };
+
     const createReq = await postReqMT5Server(
       MTAPI_ROUTES.CREATE_ACCOUNT,
       createPayload,
       req.user,
       type
     );
-    //console.log(createReq)
     if (!createReq?.success) {
       return res.error(
         `Failed to create trading account: ${createReq?.message || "Unknown error"}`,
         500
       );
     }
-    if (type === "real") {
-      if (adminId) {
-        try {
-          await tradingAccountRepository.updateTradingAccountByTAccountId(
-            createReq?.data?.answer?.Login,
-            { AdminId: new mongoose.Types.ObjectId(adminId) }
-          );
-        } catch (e) {
-          console.log("error updating AdminId on trading account", e);
-        }
-      }
-      if (
-        req?.user?.KYCVerification?.kycVerified === true &&
-        req?.user?.mt5Login?.length > 0 &&
-        type === "real"
-      ) {
-        try {
-          const bindTAccount = await bindTradingAccounts(
-            createReq?.data?.answer?.Login,
-            req?.user
-          );
-        } catch (error) {
-          console.log("error in binding account", error);
-        }
-      }
-      sendCustomEmail(whiteLabel, "trading_account_created", [email], {
-        type: "real",
-        firstName: req?.user?.name || "User",
-        login: createReq?.data?.answer?.Login,
-        tradingAccountPassword: decrypt(pass),
-        investorPassword: "2Ar#pqkj",
-        server: createReq?.data?.answer?.ServerName,
-      });
-      return res.success({}, "Client Created!", 200);
-    }
-
-    //else for demo
-    const balPayload = {
-      login: createReq?.data?.answer?.Login,
-      sum: balance || 100,
-    };
-
-    const depositeReq = await postReqMT5Server(
-      MTAPI_ROUTES.UPDATE_BALANCE,
-      balPayload,
-      req.user,
-      "demo"
-    );
-    if (!depositeReq?.success) {
-      return res.error(
-        `Failed to update balance: ${depositeReq?.message || "Unknown error"}`,
-        500
-      );
-    }
-    //updateBalInMongo
-    //   console.log('DepositeReqDepositeReqDepositeReqDepositeReq',depositeReq.data);
-    const loginId = createReq?.data?.answer?.Login;
-    const getBalPayload = { LoginId: loginId };
-    const resReq = await postReqMT5Server(
-      MTAPI_ROUTES.GET_T_ACCOUNT_INFO,
-      getBalPayload,
-      req.user,
-      type
-    );
+    console.log(createReq)
     if (!createReq?.success) {
-      return res.error(
-        `Failed to create trading account: ${createReq?.message || "Unknown error"}`,
-        500
-      );
-    }
-    const updateObj = {
-      ...processTAccountData(resReq.data),
-      ...(adminId && { AdminId: new mongoose.Types.ObjectId(adminId) }),
-    };
-    const saveToDb =
-      await tradingAccountRepository.updateTradingAccountByTAccountId(
-        resReq?.data?.Login,
-        updateObj
-      );
-    if (saveToDb) {
-      // await trAccountLimitRepository.updateOneRecord(
-      //   { clientId: id },
-      //   { $inc: { currentAccounts: 1 } }
-      // );
       try {
-        await sendCustomEmail(whiteLabel, "trading_account_created", [email], {
-          type: "demo",
-          firstName: req?.user?.name || "User",
-          login: loginId,
-          tradingAccountPassword: decrypt(pass) || pass,
-          investorPassword: "2Ar#pqkj",
-          server: createReq?.data?.answer?.ServerName,
-        });
-        console.log("✅ trading account created email sent successfully.");
-      } catch (error) {
-        console.error("❌ Failed to send email:", error.message);
+        await tradingAccountRepository.updateTradingAccountByTAccountId(
+          createReq?.data?.answer?.login
+        );
+      } catch (e) {
+        console.log("error updating on trading account", e);
       }
-      res.success({}, "Client Created!", 200);
-    } else {
-      return res.error("Error Occurred While Updating DB Record!", 500);
+   
+
+    try {
+      const bindTAccount = await bindTradingAccounts(
+        createReq?.data?.answer?.login,
+        req?.user
+      );
+    } catch (error) {
+      console.log("error in binding account", error);
     }
+
+    sendCustomEmail(whiteLabel, "trading_account_created", [email], {
+      type: "real",
+      firstName: req?.user?.name || "User",
+      login: createReq?.data?.answer?.login,
+      tradingAccountPassword: decrypt(pass),
+      investorPassword: "2Ar#pqkj",
+      server: createReq?.data?.answer?.ServerName,
+    });
+    return res.success({}, "Trading account created successfully!", 200);
+  }
   } catch (error) {
     console.log(error);
   }
@@ -264,58 +179,47 @@ export const getTradingAccount = asyncHandler(async (req, res) => {
   const { id } = req.user;
   const getClient =
     await tradingAccountRepository.getTradingAccountByFieldWithCT(id);
-  // console.log("getClient", getClient);
   if (getClient.length > 0) {
-    const demoAccounts = [];
-    const archivedAccounts = [];
     const liveAccounts = [];
     getClient.forEach((taccounts) => {
+      console.log(taccounts);
       let requestStatus =
         taccounts?.requestStatus?.status === "APPROVED" ||
-        taccounts?.requestStatus?.status === "PENDING"
+          taccounts?.requestStatus?.status === "PENDING"
           ? true
           : false;
       const account = {
         id: taccounts._id,
-        accountId: "#" + taccounts.Login,
-        adminId: taccounts.AdminId,
-        name: taccounts.Name,
-        leverage: taccounts.Leverage,
-        balance: taccounts.Balance,
-        currency: taccounts.Currency,
-        status: taccounts.Status,
-        equity: taccounts.Equity,
-        credit: taccounts.Credit || 0,
+        accountId: "#" + taccounts.login,
+        name: taccounts.name,
+        leverage: taccounts.leverage,
+        balance: taccounts.balance,
+        currency: taccounts.currency,
+        status: taccounts.status,
+        equity: taccounts.equity,
+        credit: taccounts.credit || 0,
         unrealizedPL: parseFloat(
           (
-            taccounts.Equity -
-            taccounts.Balance -
-            (taccounts.Credit || 0)
+            taccounts.equity -
+            taccounts.balance -
+            (taccounts.credit || 0)
           ).toFixed(2)
         ),
-        freeMargin: taccounts?.MarginFree,
-        createdAt: convertUnixTimestampToISO(taccounts.Registration),
-        groupName: taccounts?.Group,
-        accountType: taccounts.ManagerType,
-        serverName: taccounts?.ServerName || "ZedCapital-Demo",
-        isMasterAccount: taccounts?.IsMasterAccount || false,
+        freeMargin: taccounts?.marginFree,
+        createdAt: convertUnixTimestampToISO(taccounts.registration),
+        groupName: taccounts?.group,
+        accountType: taccounts.managerType,
+        serverName: taccounts?.serverName || "ZedCapital-Demo",
+        isMasterAccount: taccounts?.isMasterAccount || false,
         requestBasedMasterMode:
-          taccounts?.WhiteLabel?.configDetails?.requestBasedCTMaster,
+          taccounts?.whiteLabel?.configDetails?.requestBasedCTMaster,
         requestStatus: requestStatus,
-        displayName: taccounts?.Group,
+        displayName: taccounts?.group,
       };
-      if (taccounts.AccountType === "ARCHIVED") {
-        archivedAccounts.push(account);
-      } else if (taccounts.ManagerType === "demo") {
-        demoAccounts.push(account);
-      } else {
-        liveAccounts.push(account);
-      }
+      liveAccounts.push(account);
     });
     res.success(
       {
-        DemoAccounts: demoAccounts,
-        ArchivedAccounts: archivedAccounts,
         LiveAccounts: liveAccounts,
       },
       "Trading Accounts List",
@@ -523,12 +427,19 @@ export const initiateMT5PasswordChange = asyncHandler(async (req, res) => {
   const client = await clientProfileRepository.findClientByEmail(email);
   if (!client) return res.error("User not found", 400);
   const tradingAccData = await tradingAccountRepository.getAccByOptions(
-    { ClientId: req.user?.id, Login: loginId },
-    "Login"
+    { clientId: req.user?.id, login: loginId },
+    "login"
   );
   // 🔐 For REAL accounts — send OTP & return token
   if (type === "real" || accountType === "Real") {
     const otpResult = await client.generateAndSendOTP();
+    const tempTokenSecret = process.env.TEMP_TOKEN_SECRET || process.env.JWT_SECRET;
+    if (!tempTokenSecret) {
+      return res.error(
+        "TEMP_TOKEN_SECRET (or JWT_SECRET fallback) is missing from environment",
+        500
+      );
+    }
     const tempToken = jwt.sign(
       {
         email: encrypt(email),
@@ -538,23 +449,16 @@ export const initiateMT5PasswordChange = asyncHandler(async (req, res) => {
         type: "mt5_password_change",
         passwordType: passwordType.toLowerCase(), // ✅ fixed spelling
       },
-      process.env.TEMP_TOKEN_SECRET,
+      tempTokenSecret,
       { expiresIn: "15m" }
     );
-
-    const customMessage =
-      otpResult?.authMode === "primaryNumber"
-        ? "primary number"
-        : otpResult?.authMode === "email"
-          ? "email"
-          : "secondary number";
 
     return res.customSuccess(
       {
         success: true,
         otpSent: otpResult.status,
         tempToken,
-        message: `OTP sent to your ${customMessage} for MT5 password change verification.`,
+        message: `OTP sent to your email for MT5 password change verification.`,
       },
       200
     );
@@ -648,6 +552,7 @@ export const verifyAndChangeMT5Password = asyncHandler(async (req, res) => {
     mt5PasswordChangeBody,
     req.user
   );
+  console.log(changePasswordReq, 'changePasswordReq');
 
   if (changePasswordReq?.success) {
     try {
@@ -697,40 +602,40 @@ export function processTAccountData(item) {
 
   return {
     // Login: String(item.Login),
-    CurrencyDigits: safeParseNumber(item.CurrencyDigits),
-    Balance: safeParseFloat(item.Balance),
-    Credit: safeParseFloat(item.Credit),
-    Margin: safeParseFloat(item.Margin),
-    MarginFree: safeParseFloat(item.MarginFree),
-    MarginLevel: safeParseFloat(item.MarginLevel),
-    MarginLeverage: safeParseNumber(item.MarginLeverage),
-    MarginInitial: safeParseFloat(item.MarginInitial),
-    MarginMaintenance: safeParseFloat(item.MarginMaintenance),
-    Profit: safeParseFloat(item.Profit),
-    Storage: safeParseFloat(item.Storage),
-    Floating: safeParseFloat(item.Floating),
-    Equity: safeParseFloat(item.Equity),
-    SOActivation: safeParseNumber(item.SOActivation),
-    SOTime: safeParseNumber(item.SOTime),
-    SOLevel: safeParseFloat(item.SOLevel),
-    SOEquity: safeParseFloat(item.SOEquity),
-    SOMargin: safeParseFloat(item.SOMargin),
-    BlockedCommission: safeParseFloat(item.BlockedCommission),
-    BlockedProfit: safeParseFloat(item.BlockedProfit),
-    Assets: safeParseFloat(item.Assets),
-    Liabilities: safeParseFloat(item.Liabilities),
+    currencyDigits: safeParseNumber(item.CurrencyDigits),
+    balance: safeParseFloat(item.Balance),
+    credit: safeParseFloat(item.Credit),
+    margin: safeParseFloat(item.Margin),
+    marginFree: safeParseFloat(item.MarginFree),
+    marginLevel: safeParseFloat(item.MarginLevel),
+    marginLeverage: safeParseNumber(item.MarginLeverage),
+    marginInitial: safeParseFloat(item.MarginInitial),
+    marginMaintenance: safeParseFloat(item.MarginMaintenance),
+    profit: safeParseFloat(item.Profit),
+    storage: safeParseFloat(item.Storage),
+    floating: safeParseFloat(item.Floating),
+    equity: safeParseFloat(item.Equity),
+    soActivation: safeParseNumber(item.SOActivation),
+    sotime: safeParseNumber(item.SOTime),
+    soLevel: safeParseFloat(item.SOLevel),
+    soEquity: safeParseFloat(item.SOEquity),
+    soMargin: safeParseFloat(item.SOMargin),
+    blockedCommission: safeParseFloat(item.BlockedCommission),
+    blockedProfit: safeParseFloat(item.BlockedProfit),
+    assets: safeParseFloat(item.Assets),
+    liabilities: safeParseFloat(item.Liabilities),
   };
 }
 
 export const getAndUpdateTAccountInfo = asyncHandler(async (req, res) => {
-  const { loginId } = req?.body;
+  const { loginId } = req?.query;
 
   const tradingAccData = await tradingAccountRepository.getAccByOptions(
     {
-      ClientId: req.user?.id,
-      Login: loginId,
+      clientId: req.user?.id,
+      login: loginId,
     },
-    "Login"
+    "login"
   );
 
   if (tradingAccData.length != 0) {
@@ -742,7 +647,6 @@ export const getAndUpdateTAccountInfo = asyncHandler(async (req, res) => {
       req.user,
       type
     );
-    // console.log(createReq);
     if (!createReq?.success) {
       return res.error(
         `Failed to create trading account: ${createReq?.message || "Unknown error"}`,
@@ -758,10 +662,10 @@ export const getAndUpdateTAccountInfo = asyncHandler(async (req, res) => {
     // console.log(updateObj);
     // const actualLeverage = MarginInitial > 0 ? (MarginInitial / Equity) * MarginLeverage : 0;
     const response = {
-      actualLeverage: parseFloat(updateObj.MarginInitial.toFixed(2)),
-      maximumLeverage: `1:${updateObj.MarginLeverage}`, // Fixed value as a number
-      freeMargin: parseFloat(updateObj.MarginFree.toFixed(2)), // Free margin as a float
-      unrealizedPL: parseFloat(updateObj.Floating.toFixed(2)),
+      actualLeverage: parseFloat(updateObj?.marginInitial?.toFixed(2)),
+      maximumLeverage: `1:${updateObj?.marginLeverage}`, // Fixed value as a number
+      freeMargin: parseFloat(updateObj?.marginFree?.toFixed(2)), // Free margin as a float
+      unrealizedPL: parseFloat(updateObj?.floating?.toFixed(2)),
     };
     if (!saveToDb) {
       return res.success(
@@ -835,8 +739,8 @@ export const updateTrAccountLeverage = asyncHandler(async (req, res) => {
   const { type = "real" } = req?.query;
   id = new mongoose.Types.ObjectId(id);
   const checkTradingAcc = await tradingAccountRepository.getAccByOptions({
-    ClientId: id,
-    Login: tAccountNo,
+    clientId: id,
+    login: tAccountNo,
   });
   if (checkTradingAcc.length < 1) {
     return res.error("Trading Account Number Not Valid", 400);
@@ -855,7 +759,7 @@ export const updateTrAccountLeverage = asyncHandler(async (req, res) => {
     const updateDB =
       await tradingAccountRepository.updateTradingAccountByTAccountId(
         tAccountNo,
-        { Leverage: leverage }
+        { leverage: leverage }
       );
     if (!updateDB) {
       return res.error("Failed to Update Trading Acc");
@@ -870,7 +774,7 @@ export const getTrAccountLimitForClient = asyncHandler(async (req, res) => {
   const { id } = req?.user;
   const accountLimit = await clientProfileRepository.getClientById(
     id,
-    "tradingAccLimit -__v"
+    "tradingAccLimit -_id"
   );
   if (!accountLimit) {
     return res.error("Account limit not found", 404);
@@ -907,14 +811,8 @@ export const checkRequest = asyncHandler(async (req, res) => {
 });
 
 export const raiseIncreaseRequest = asyncHandler(async (req, res) => {
-  const { id, whiteLabel, email, KYCVerification, tradingAccLimit, adminId } = req.user;
+  const { id, whiteLabel, tradingAccLimit, } = req.user;
   const { increaseLimit, reason } = req.body;
-  if (KYCVerification?.kycVerified != true) {
-    return res.error(
-      "Account Verification Required to Increase Trading Account Limit",
-      400
-    );
-  }
   if (parseInt(tradingAccLimit) >= parseInt(increaseLimit)) {
     return res.error(
       "Requested Limit must be greater than Approved Limit",
@@ -931,11 +829,9 @@ export const raiseIncreaseRequest = asyncHandler(async (req, res) => {
   const createObject = {
     clientId: new mongoose.Types.ObjectId(id),
     whiteLabel: new mongoose.Types.ObjectId(whiteLabel),
-    adminId: new mongoose.Types.ObjectId(adminId),
     requestedLimit: increaseLimit,
     reason,
     status: "Pending",
-    // email: email,
   };
   const createReq =
     trAccountLimitRepository.createTradingAccountLimit(createObject);
@@ -960,12 +856,12 @@ export const renameTradingAcc = asyncHandler(async (req, res) => {
     return res.error("ERROR OCCURRED WHILE RENAMING ACCOUNT MT-SERVER", 400);
   }
   let filter = {
-    WhiteLabel: whiteLabel,
-    Login: loginId,
+    whiteLabel: whiteLabel,
+    login: loginId,
   };
   const updateDb = await tradingAccountRepository.updateTrAccountByFields(
     filter,
-    { Name: newAccName, FirstName: newAccName }
+    { name: newAccName, firstName: newAccName }
   );
   if (updateDb.acknowledged) {
     return res.success([], "Account Name Updated");

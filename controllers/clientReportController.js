@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
-import { postReqMT5Server } from "../utils/mt5ServerUtils.js";
+import { postReqMT5Server } from "../wrapperConfig/mt5WrapperUtils.js";
 import tradingAccountRepository from "../repositories/tradingAccountRepository.js";
 import accountTransRepository from "../repositories/clientAccountTransactionHistoryRepository.js";
 import moment from "moment";
@@ -18,13 +18,13 @@ const getTodayDate = () => {
   return formattedDate;
 };
 export const getOpenOrders = asyncHandler(async (req, res) => {
-  const { tAccountNo } = req.body;
+  const { tAccountNo } = req.query;
   const tradingAccData = await tradingAccountRepository.getAccByOptions(
     {
-      ClientId: req.user?.id,
-      Login: tAccountNo,
+      clientId: req.user?.id,
+      login: tAccountNo,
     },
-    "Login"
+    "login"
   );
 
   if (tradingAccData.length != 0) {
@@ -62,7 +62,7 @@ export const getOpenOrders = asyncHandler(async (req, res) => {
 });
 
 export const getClosedOrders2 = asyncHandler(async (req, res) => {
-  const { tAccountNo } = req.body;
+  const { tAccountNo } = req.query;
   let { fromDate, toDate } = req.body;
   const { type = "real" } = req?.query;
   const getTotalResult = await postReqMT5Server(
@@ -116,8 +116,8 @@ export const getClosedOrders2 = asyncHandler(async (req, res) => {
 });
 
 export const getCloseOrderDemo = asyncHandler(async (req, res,detail) => {
-  const { tAccountNo ,sortOrder} = req.body;
-  const positionNo = req.body.positionID;
+  const { tAccountNo ,sortOrder} = req.query;
+  const positionNo = req.query.positionID;
   let { fromDate, toDate } = req.body;
   const { type = "real" } = req?.query;
   fromDate = moment(fromDate).subtract(1, "days").format("DD/MM/YYYY");
@@ -309,17 +309,13 @@ const transformOrders = (orders) => {
 
 export const getClosedOrders = asyncHandler(async (req, res) => {
   const { whiteLabel, id } = req.user;
-  let { fromDate, toDate, tAccountNo, sortOrder } = req.body;
-  const { type = "real" } = req?.query;
-  if (type === "demo") {
-    return await getCloseOrderDemo(req, res);
-  }
+  let { fromDate, toDate, tAccountNo, sortOrder } = req.query;
   const tradingAccData = await tradingAccountRepository.getAccByOptions(
     {
-      ClientId: req.user?.id,
-      Login: tAccountNo,
+      clientId: req.user?.id,
+      login: tAccountNo,
     },
-    "Login"
+    "login"
   );
 
   if (tradingAccData.length != 0) {
@@ -336,7 +332,7 @@ export const getClosedOrders = asyncHandler(async (req, res) => {
     const transforedData = newtransformOrders(getClosedOrders);
     return res.success(
       transforedData,
-      transforedData.length > 0 ? "Order Fetched" : "No Orders Found",
+      transforedData?.length > 0 ? "Order Fetched" : "No Orders Found",
       200
     );
   } else {
@@ -346,15 +342,15 @@ export const getClosedOrders = asyncHandler(async (req, res) => {
 
 export const getClosedOrdersDetails = asyncHandler(async (req, res) => {
   const { whiteLabel, id } = req.user;
-  let { tAccountNo, positionID } = req.body;
+  let { tAccountNo, positionID } = req.query;
   const { type = "real" } = req.query;
   if (type === "demo") {
     return await getCloseOrderDemo(req, res,"details");
   }
 
   const tradingAccData = await tradingAccountRepository.getAccByOptions(
-    { ClientId: id, Login: tAccountNo },
-    "Login"
+    { clientId: id, login: tAccountNo },
+    "login"
   );
 
   if (tradingAccData.length === 0) {
@@ -378,7 +374,7 @@ export const getClosedOrdersDetails = asyncHandler(async (req, res) => {
 });
 
 export const getReportOverview = asyncHandler(async (req, res) => {
-  let { toDate, fromDate } = req.body;
+  let { toDate, fromDate } = req.query;
   const { whiteLabel, id, mt5Login } = req.user;
   const { type } = req?.query;
   fromDate = moment(fromDate, "DD-MM-YYYY HH:mm:ss").toISOString();

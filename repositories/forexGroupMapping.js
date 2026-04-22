@@ -1,37 +1,28 @@
-import { MongoClient, ObjectId } from "mongodb";
+import ForexGroupMappingModel from "../models/forexGroups.model.js";
 
-const client = new MongoClient(process.env.DEV_DB_URI);
-const databaseName = process.env.MONGO_DB_NAME;
 
 class ForexGroupMapping {
-  async connectToCollection(collectionName) {
-    if (!client.isConnected) {
-      await client.connect();
-    }
-    return client.db(databaseName).collection(collectionName);
-  }
 
   async getForexGroupMapping(filter = {}, selectFields = "") {
-    const mapping = await this.connectToCollection("SubAgentGroupMapping");
-    return await mapping.find(filter).select(selectFields);
+    const mapping = await ForexGroupMappingModel.find(filter).select(selectFields);
+    return mapping;
   }
   async getForexGroupMappingByFilter(filter = {}) {
-    const mapping = await this.connectToCollection("SubAgentGroupMapping");
-    return await mapping.findOne(filter)
+    const mapping = await ForexGroupMappingModel.findOne(filter);
+    return mapping;
   }
 
   async updateForexGroupMapping(filter, updatePayload) {
-    const mapping = await this.connectToCollection("SubAgentGroupMapping");
-    return await mapping.findOneAndUpdate(filter, updatePayload, {
+    const mapping = await ForexGroupMappingModel.findOneAndUpdate(filter, updatePayload, {
       new: true,
       upsert: true,
       runValidators: true,
     });
+    return mapping;
   }
 
   async getForexGroupMappingById(groupId, selectFields = "") {
-    const mapping = await this.connectToCollection("SubAgentGroupMapping");
-    return await mapping.findById(groupId).select(selectFields);
+    return await ForexGroupMappingModel.findById(groupId).select(selectFields);
   }
 }
 

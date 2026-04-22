@@ -17,10 +17,6 @@ const TradeReportSchema = new Schema(
       ref: "whiteLabel",
       required: true,
     },
-    adminId: {
-      type: Schema.Types.ObjectId,
-      ref: "user"
-    },
     order: {
       type: String,
       required: true,

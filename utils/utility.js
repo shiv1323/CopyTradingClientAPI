@@ -1,3 +1,4 @@
+import crypto from "crypto";
 export function detectDevice(userAgent) {
     if (!userAgent) {
       return "UNKNOWN";

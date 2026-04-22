@@ -1,14 +1,8 @@
 import mongoose from 'mongoose';
 import { generateUniqueNumericId, getUTCTime, sendCustomEmail } from '../utils/commonUtils.js';
-export const USER_ROLES = {
-  SU: 'SUPERADMIN',
-  ADMIN: 'ADMIN',
-  MANAGER: 'MANAGER',
-};
+import { encrypt, decrypt } from '../utils/authUtils.js';
+import { USER_ROLE_NAME_ENUM, USER_STATUS_ENUM } from '../utils/constant.js';
 
-// Mongoose enum helpers
-export const USER_STATUS_ENUM = ['active', 'suspended'];
-export const USER_ROLE_NAME_ENUM = [USER_ROLES.SU, USER_ROLES.ADMIN, USER_ROLES.MANAGER];
 
 const userSchema = new mongoose.Schema(
   {
@@ -85,7 +79,7 @@ const userSchema = new mongoose.Schema(
     },
     createdAt: {
       type: Date,
-      default: null,
+      default: getUTCTime(),
     },
     updatedAt: {
       type: Date,
@@ -102,6 +96,7 @@ userSchema.index({ company: 1, email: 1 }, { unique: true });
 userSchema.statics.generateUserName = async function () {
   return generateUniqueNumericId(this, { field: 'userId', digits: 10 });
 };
+
 
 //******************************MFA MEATHODS*******************************//
 

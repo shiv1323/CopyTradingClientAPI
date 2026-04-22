@@ -1,4 +1,5 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import { CT_MASTER_REQUEST_STATUS_ENUM, CT_MASTER_REQUEST_TYPE_ENUM } from '../utils/constant.js';
 
 const { Schema, model, Types } = mongoose;
 
@@ -11,18 +12,18 @@ const CtMasterRequestSchema = new Schema(
     },
     whiteLabel: {
       type: Types.ObjectId,
-      ref: "WhiteLabel",
+      ref: 'whiteLabel',
       required: true,
     },
     masterId: {
       type: Types.ObjectId,
-      ref: "Client",
+      ref: 'clientProfile',
       required: true,
     },
     status: {
       type: String,
-      enum: ["PENDING", "APPROVED", "REJECTED", "CANCELATION", "CANCELLED"],
-      default: "PENDING",
+      enum: CT_MASTER_REQUEST_STATUS_ENUM,
+      default: 'PENDING',
     },
     requestedAt: {
       type: Date,
@@ -38,12 +39,12 @@ const CtMasterRequestSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ["mark", "unmark"],
+      enum: CT_MASTER_REQUEST_TYPE_ENUM,
       required: true,
     },
   },
   {
-    collection: "CTMasterRequest",
+    collection: 'ctMasterRequest',
   }
 );
 CtMasterRequestSchema.index(
@@ -51,7 +52,7 @@ CtMasterRequestSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      status: { $in: ["APPROVED", "PENDING"] },
+      status: { $in: ['APPROVED', 'PENDING'] },
     },
   }
 );
@@ -61,10 +62,10 @@ CtMasterRequestSchema.index(
   {
     unique: true,
     partialFilterExpression: {
-      status: "CANCELATION",
+      status: 'CANCELATION',
     },
   }
 );
-const CtMasterRequest = model("ctmasterRequest", CtMasterRequestSchema);
+const CtMasterRequest = model('ctMasterRequest', CtMasterRequestSchema);
 
 export default CtMasterRequest;

@@ -27,16 +27,11 @@ const transactionSchema = new mongoose.Schema(
   {
     whiteLabel: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "WhiteLabel",
-    },
-    adminId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      default: null,
+      ref: "whiteLabel",
     },
     clientId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Client",
+      ref: "clientProfile",
       required: true,
       index: true,
     },
@@ -107,14 +102,14 @@ const transactionSchema = new mongoose.Schema(
     },
   },
   {
-    collection: "PaymentGatewayRecord",
+    collection: "paymentGatewayRecords",
     timestamps: true,
     versionKey: false,
   }
 );
 
 const paymentGateway = mongoose.model(
-  "PaymentGatewayRecord",
+  "paymentGatewayRecords",
   transactionSchema
 );
 

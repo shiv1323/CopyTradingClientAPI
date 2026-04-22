@@ -17,23 +17,23 @@ class TradingAccountRepository {
 
   async getTradingAccountByFieldWithCTMaster(query) {
     return await TradingAccountModel.find(query)
-      .populate({ path: "WhiteLabel", select: "configDetails" })
+      .populate({ path: "whiteLabel", select: "configDetails" })
       .lean();
   }
   async getTradingAccountByFieldWithCT(id) {
     return await TradingAccountModel.aggregate([
       {
         $match: {
-          ClientId: new mongoose.Types.ObjectId(id),
+          clientId: new mongoose.Types.ObjectId(id),
         },
       },
       {
         $lookup: {
-          from: "CTMasterRequest",
+          from: "ctMasterRequest",
           let: {
-            login: "$Login",
-            wl: "$WhiteLabel",
-            client: "$ClientId",
+            login: "$login",
+            wl: "$whiteLabel",
+            client: "$clientId",
           },
           pipeline: [
             {
@@ -61,38 +61,37 @@ class TradingAccountRepository {
       },
       {
         $lookup: {
-          from: "WhiteLabel",
-          localField: "WhiteLabel",
+          from: "whiteLabel",
+          localField: "whiteLabel",
           foreignField: "_id",
-          as: "WhiteLabel",
+          as: "whiteLabel",
         },
       },
       {
         $unwind: {
-          path: "$WhiteLabel",
+          path: "$whiteLabel",
           preserveNullAndEmptyArrays: true,
         },
       },
       {
         $project: {
-          Login: 1,
-          Name: 1,
-          Leverage: 1,
-          Balance: 1,
-          Currency: 1,
-          Status: 1,
-          Equity: 1,
-          Credit: 1,
-          MarginFree: 1,
-          Registration: 1,
-          Group: 1,
-          ManagerType: 1,
-          ServerName: 1,
-          IsMasterAccount: 1,
-          AccountType: 1,
-          AdminId: 1,
-          WhiteLabel: {
-            configDetails: "$WhiteLabel.configDetails",
+          login: 1,
+          name: 1,
+          leverage: 1,
+          balance: 1,
+          currency: 1,
+          status: 1,
+          equity: 1,
+          credit: 1,
+          marginFree: 1,
+          group: 1,
+          managerType: 1,
+          serverName: 1,
+          registration: 1,
+          isMasterAccount: 1,
+          accountType: 1,
+          whiteLabel: {
+            configDetails: "$whiteLabel.configDetails",
           },
           requestStatus: 1,
         },
@@ -109,19 +108,19 @@ class TradingAccountRepository {
   async getOneMasterTradingAccountByField(query) {
     return await TradingAccountModel.findOne(query, {
       _id: 1,
-      GroupId: 1,
+      groupId: 1,
     }).lean();
   }
   async getOneFollowerTradingAccountByField(query) {
     return await TradingAccountModel.findOne(query, {
       _id: 1,
-      GroupId: 1,
+      groupId: 1,
     }).lean();
   }
 
   async fetchTradingAccountFund(query) {
     return await TradingAccountModel.find(query)
-      .select({ Equity: 1, Balance: 1 })
+      .select({ equity: 1, balance: 1 })
       .lean();
   }
 
@@ -163,7 +162,7 @@ class TradingAccountRepository {
   }
   async updateTradingAccountByTAccountId(taccountId, updates) {
     return await TradingAccountModel.findOneAndUpdate(
-      { Login: taccountId },
+      { login: taccountId },
       updates,
       { new: true }
     );
@@ -202,7 +201,7 @@ class TradingAccountRepository {
   }
   async updateAccountBalance(loginId, newBalance) {
     return await TradingAccountModel.findOneAndUpdate(
-      { Login: loginId },
+      { login: loginId },
       { $set: { Balance: newBalance } },
       { new: true }
     );
@@ -224,61 +223,61 @@ class TradingAccountRepository {
   }
   async getTradingAccUponWhiteLabel(whiteLabel) {
     return await TradingAccountModel.find({
-      WhiteLabel: whiteLabel,
-      ManagerType: "real",
-    }).select("_id ClientId Login Group AccountType WhiteLabel");
+      whiteLabel: whiteLabel,
+      managerType: "real",
+    }).select("_id clientId login group accountType whiteLabel");
   }
   async getTradingAccountByClientId(whiteLabel, clientId) {
     return await TradingAccountModel.find({
-      WhiteLabel: whiteLabel,
-      AccountType: "REAL",
-      ManagerType: "real",
-      ClientId: clientId,
+      whiteLabel: whiteLabel,
+      accountType: "REAL",
+      managerType: "real",
+      clientId: clientId,
     })
       .select(
-        "_id ClientId Login Group AccountType Balance Equity Credit MarginFree"
+        "_id clientId login group accountType balance equity credit marginFree"
       )
       .lean();
   }
 
   async updateTradingAccountMasterEligible(query, value) {
     return await TradingAccountModel.updateOne(query, {
-      IsMasterAccount: value,
+      isMasterAccount: value,
     });
   }
   async updateTradingAccountOnBecomeFollower(query, value) {
     return await TradingAccountModel.updateOne(query, {
-      IsFollowerAccount: value,
+      isFollowerAccount: value,
     });
   }
 
   async getTradingAccountsOfMaster(whiteLabel, masterId) {
     return await TradingAccountModel.find({
-      WhiteLabel: whiteLabel,
-      ClientId: masterId,
-      IsMasterAccount: true,
-    }).select("Login Name ClientId");
+      whiteLabel: whiteLabel,
+      clientId: masterId,
+      isMasterAccount: true,
+    }).select("login name clientId");
   }
 
   async getTradingAccountsOfEligibleFollowers(whiteLabel, clietId) {
     return await TradingAccountModel.find({
-      WhiteLabel: whiteLabel,
-      ClientId: clietId,
-      IsMasterAccount: false,
-      IsFollowerAccount: false,
-      ManagerType: "real",
-      AccountType: "REAL",
-    }).select("Login Name ClientId");
+      whiteLabel: whiteLabel,
+      clientId: clietId,
+      isMasterAccount: false,
+      isFollowerAccount: false,
+      managerType: "real",
+      accountType: "REAL",
+    }).select("login name clientId");
   }
 
   async updateMasterTradingAccount(whiteLabel, clietId, loginId, value) {
     return await TradingAccountModel.updateOne(
       {
-        WhiteLabel: whiteLabel,
-        ClientId: clietId,
-        Login: loginId,
+        whiteLabel: whiteLabel,
+        clientId: clietId,
+        login: loginId,
       },
-      { IsMasterAccount: value }
+      { isMasterAccount: value }
     );
   }
 }

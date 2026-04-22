@@ -1,5 +1,5 @@
-// const transactionService = require('../services/transactionService');
-// const apiResponse = require('../utils/apiResponse');
+// import transactionService from '../services/transactionService.js';
+// import apiResponse from '../utils/apiResponse.js';
 
 // exports.transferFromWalletToTrading = async (req, res) => {
 //   try {

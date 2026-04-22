@@ -6,9 +6,9 @@ import { getFullBalance, getUserProfile, updateSdflg } from "../controllers/prof
 
 const router = express.Router();
 
-
-router.get('/getUserProfile',authHandler,getUserProfile);
-router.get('/getBalance',authHandler,getFullBalance);
-router.post('/flipsdswiitch',authHandler,updateSdflg)
+router.use(authHandler);
+router.get('/getUserProfile',getUserProfile);
+router.get('/getBalance',getFullBalance);
+router.put('/flipsdswiitch',updateSdflg)
 
 export default router;

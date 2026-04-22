@@ -613,7 +613,7 @@ export const setMasterRulesForAllFollowers = asyncHandler(async (req, res) => {
       );
     if (!approvedMasterRequest) {
       return res.error(
-        "Master not found. Master must be approved in CTMasterRequest first.",
+        "Master not found. Master must be approved in ctMasterRequest first.",
         404,
       );
     }
