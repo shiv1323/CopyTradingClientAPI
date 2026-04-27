@@ -19,7 +19,6 @@ export function createTransactionObject(body) {
     externalReferenceId,
     transactionId,
     whiteLabel,
-    adminId,
     accountType,
     clientId,
     fromAccount,
@@ -37,7 +36,6 @@ export function createTransactionObject(body) {
   // console.log(body);
   return {
     whiteLabel: whiteLabel,
-    adminId: adminId ? new mongoose.Types.ObjectId(adminId) : null,
     transactionId: transactionId || uuidv4(),
     accountType: accountType || null,
     parentTransactionId: parentTransactionId || null,
@@ -140,7 +138,7 @@ export const depositeAmountProcess = asyncHandler(async (req, res) => {
 });
 export const withDrawlAmountProcess = asyncHandler(async (req, res) => {
   // console.log("here");
-  const { id, userId, whiteLabel,adminId } = req.user;
+  const { id, userId, whiteLabel } = req.user;
   const totalGroups = await forexGroupRepository.findGroupByOptions(
     {
       WhiteLabel: whiteLabel,
@@ -169,7 +167,6 @@ export const withDrawlAmountProcess = asyncHandler(async (req, res) => {
     groupDict,
     id,
     whiteLabel,
-    adminId
   );
   if (resp?.success) {
     const saveTransactions = resp?.result?.transactionReports.map(
@@ -177,7 +174,6 @@ export const withDrawlAmountProcess = asyncHandler(async (req, res) => {
         const newTransactionHistoryRecord = {
           clientId: id,
           whiteLabel: whiteLabel,
-          adminId: adminId,
           transactionId: transactionId,
           accountType: transactionReport.accountType,
           fromAccount: transactionReport.fromAccount,
@@ -398,7 +394,6 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
       clientDetails: {
         clientId: transaction.clientId,
         whiteLabelId: transaction.whiteLabel,
-        adminId: transaction.adminId,
       },
       transactionDetails: {
         transactionId: transaction.transactionId,
@@ -491,8 +486,10 @@ export const getClientOverAllFund = asyncHandler(async (req, res) => {
 });
 export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
   const transactionId = uuidv4();
-  const { whiteLabel, walletBalance, _id, userId, adminId } = req.user;
+  const { whiteLabel, id, userId } = req.user;
   // console.log(req.user);
+
+  const walletBalance = await clientProfileRepository.findOneClientSelectedField(id,walletBalance);
   const {
     requestType,
     paymentMethod,
@@ -559,14 +556,13 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
   }
   const newObj = {
     whiteLabel: new mongoose.Types.ObjectId(whiteLabel),
-    adminId: new mongoose.Types.ObjectId(adminId),
     requestId: transactionId,
     userId: userId,
     paymentMethod: paymentMethod,
     // cryptoCurrency: currency,
     // walletAddress: walletAddress,
     amount: amountInt,
-    client: new mongoose.Types.ObjectId(_id),
+    client: new mongoose.Types.ObjectId(id),
   };
 
   if (requestType.toUpperCase() === "BANK") {
@@ -605,9 +601,8 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
     return res.error("Failed to raise withdrawl request", 400);
   }
   const withdrawRequestReport = {
-    clientId: _id,
+    clientId: id,
     whiteLabel: whiteLabel,
-    adminId: adminId,
     transactionId: transactionId,
     accountType: "WALLET",
     fromAccount: {
@@ -640,7 +635,7 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
     saveWithdrawRequestReport
   );
   const updatedClient = await clientProfileRepository.updateWalletBalance(
-    _id,
+    id,
     amountInt
   );
   if (!updatedClient) {

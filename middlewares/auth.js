@@ -1,5 +1,6 @@
 import whiteLabelRepository from "../repositories/whiteLabelRepository.js";
 import { verifyRSATokenData } from "../utils/jwt.js";
+import { verifyUserAxios } from "../utils/verifyUserAxios.js";
 import { publicKey  } from "../config/keyLoader.js";
 export const validateWhiteLabel = async (req, res, next) => {
   try {
@@ -25,7 +26,7 @@ export const validateWhiteLabel = async (req, res, next) => {
 // find whiteLabel by domain 
 export const findWhiteLabelByDomain = async (req, res, next) => {
   try {
-    let domain = "companyabc.com";
+    let domain = req.query.domain || req.body.domain;
     // console.log(domain);
     if (!domain && req.headers.referer) {
       try {
@@ -54,7 +55,7 @@ export const findWhiteLabelByDomain = async (req, res, next) => {
     }
 
     // Find whiteLabel by domain
-    const whiteLabel = await whiteLabelRepository.findByDomain(domain);
+    const whiteLabel = await whiteLabelRepository.getWhitelabelByWebsite(domain);
 
     if (!whiteLabel) {
       return res.status(403).json({
@@ -74,9 +75,14 @@ export const findWhiteLabelByDomain = async (req, res, next) => {
 
 export const verifyRSAToken = async (req, res, next) => {
   const token = req.body.token || req.query.token;
-  const whiteLabel = await findWhiteLabelByDomain(req, res, next);
-  const publicKey = publicKey;
-  if (!publicKey) {
+  const publicKeyValue = publicKey;
+  if (!req.whiteLabelId || !req.whiteLabel) {
+    return res.status(400).json({
+      success: false,
+      message: 'WhiteLabel context is missing',
+    });
+  }
+  if (!publicKeyValue) {
     return res.status(400).json({
       success: false,
       message: 'Public key is required',
@@ -89,15 +95,21 @@ export const verifyRSAToken = async (req, res, next) => {
     });
   }
   try {
-    
-    const decoded = verifyRSATokenData(token, publicKey);
+    const decoded = verifyRSATokenData(token, publicKeyValue);
+    const verifyUser = await verifyUserAxios({ userId: decoded.userId });
+    if (!verifyUser.success) {
+      return res.status(400).json({
+        success: false,
+        message: 'User verification failed',
+      });
+    }
     req.tokenPayload = decoded;
     next();
   } catch (error) {
     console.error('Error verifying RSA token:', error);
-    return res.status(500).json({
+    return res.status(401).json({
       success: false,
-      message: 'Error verifying RSA token',
+      message: 'Invalid or expired JWT token',
     });
   }
 }

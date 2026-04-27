@@ -14,10 +14,11 @@ import { sendCustomEmail } from "../utils/commonUtils.js";
 import clientProfileModel from "../models/clientProfile.model.js";
 import paymentCurrencyRepository from "../repositories/paymentCurrencyRepository.js";
 import paymentGetwayRepository from "../repositories/paymentGetwayRepository.js";
-
-const baseURL = process.env.PAYMENTGATWAY_BASEURL;
-const secretkey = process.env.PAYMENTGATWAY_SECRET_ACCESS_KEY;
-const application_id = process.env.PAYMENTGATWAY_APPLICATION_ID;
+import env from "../config/env.js";
+ 
+const baseURL = env.PAYMENTGATWAY_BASEURL;
+const secretkey = env.PAYMENTGATWAY_SECRET_ACCESS_KEY;
+const application_id = env.PAYMENTGATWAY_APPLICATION_ID;
 
 
 
@@ -140,7 +141,7 @@ const saveTransactionReport = async (reportData) => {
 
 // initiate and walletaddress
 export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
-  const { id, userId, whiteLabel, adminId } = req.user;
+  const { id, userId, whiteLabel } = req.user;
   const {
     amount,
     crypto_currency,
@@ -231,7 +232,6 @@ export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
     const { wallet_address, token_address } = walletResponse.data?.data;
     const transactionData = {
       whiteLabel,
-      adminId: new mongoose.Types.ObjectId(adminId),
       clientId: id,
       userAmount: amount,
       currency,
@@ -259,7 +259,6 @@ export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
           req.body.paymentStatus = "DEPOSIT";
           req.body.transactionId = transfer_reference_id;
           req.body.clientId = id;
-          req.body.adminId = adminId;
           req.body.review = "Processing";
           req.body.status = "PENDING";
           req.body.completedAt = moment().toISOString();
@@ -291,7 +290,6 @@ export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
           transactionId: transfer_reference_id,
           transactionAmount: amount,
           whiteLabel,
-          adminId,
           clientId: id,
           fromAccount: {
             type: payment_options[0]?.payment_method_details?.blockchain,

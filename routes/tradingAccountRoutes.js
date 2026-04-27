@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.use(authHandler);
 router.post('/createTradingAccount',createTradeAccValidationRules(),validateReq,createTradingAccount);
-router.get('/getClientTradingAccounts',getTradingAccount);
+router.get('/getClientTradingAccounts',getTradingAccount);  // checked
 router.post('/setBalance',setBalanceValidationRules(),validateReq,setBalance);
 router.post('/initiateMT5AccountPasswordChange',validateInitiateMT5PasswordChange(),validateReq,initiateMT5PasswordChange);
 router.post('/verifyMT5AccountPasswordChange',validateVerifyAndChangeMT5Password(),validateReq,verifyAndChangeMT5Password);

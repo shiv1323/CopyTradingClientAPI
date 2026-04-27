@@ -6,7 +6,7 @@ import { getTradeExecutionLogs,executionTradeLogDropDowns } from "../controllers
 
 const router = express.Router();
 
-router.get("/ctTradeExecutionActivity", authHandler, getTradeExecutionLogs);
-router.get("/getDropDowns", authHandler, executionTradeLogDropDowns);
+router.get("/ctTradeExecutionActivity", authHandler, getTradeExecutionLogs); // checked
+router.get("/getDropDowns", authHandler, executionTradeLogDropDowns); // checked
 
 export default router;

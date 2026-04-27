@@ -645,7 +645,6 @@ export async function processTransaction(
   groupDict,
   id,
   whiteLabel,
-  adminId
 ) {
   const transaction = determineTransactionType(fromAccount, toAccount);
   if (!transaction || !transaction.handlerFunction) {
@@ -662,7 +661,6 @@ export async function processTransaction(
     groupDict,
     id,
     whiteLabel,
-    adminId
   });
   // console.log(result);
   if (result.success) {

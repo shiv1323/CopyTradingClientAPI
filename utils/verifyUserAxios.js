@@ -1,14 +1,15 @@
 import axios from "axios";
 import "dotenv/config";
 import { generateRSAToken } from "./jwt.js";
+import env from "../config/env.js";
 
-export const verifyUserAxios = async (token) => {
+export const verifyUserAxios = async (userId) => {
     try {
-        // console.log(process.env.VERIFY_USER_URL);
+        console.log("Verify user started with userId:", userId);
         const rsaToken = generateRSAToken(
-            token
+            userId
         );
-        const response = await axios.post(`${process.env.VERIFY_USER_URL}`, {
+        const response = await axios.post(`${env.VERIFY_USER_URL}`, {
             token:rsaToken
         });
         console.log(response.data);

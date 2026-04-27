@@ -2,14 +2,14 @@ import clientModel from "../models/clientProfile.model.js";
 import mongoose from "mongoose";
 class ClientRepository {
     async create(data) {
-    return await clientProfile.create(data);
+    return await clientModel.create(data);
   }
 
   async findOrCreate(ctUserData) {
     const { email, whiteLabel } = ctUserData;
     
     // Find existing user
-    const existingUser = await clientProfile.findOne({
+    const existingUser = await clientModel.findOne({
       email: email.toLowerCase().trim(),
       whiteLabel: whiteLabel,
     });
@@ -45,13 +45,14 @@ class ClientRepository {
   }
 
   async update(ctUserId, updateData) {
-  return await clientProfile.findByIdAndUpdate(
+  return await clientModel.findByIdAndUpdate(
     ctUserId,
     updateData,
     { new: true }
   )
-    .populate('whiteLabel', 'name website');
+    .populate('whiteLabel', 'company website email');
   }
+
   // Create a new client
   async createClient(clientData) {
     const client = new clientModel(clientData);
@@ -323,6 +324,42 @@ class ClientRepository {
   async updatesbswitch(clientId, updateData) {
     return await clientModel.findByIdAndUpdate(clientId, updateData, { new: true });
   }
+
+    async findOneClientSelectedField(id, fields, session = null) {
+    const fieldString = fields.join(" ");
+    const result = await clientModel
+      .findById(id)
+      .select(fieldString)
+      // .populate({
+      //   path: "whiteLabel",
+      //   select: "configDetails.minIbWalletLimit",
+      // })
+      .session(session)
+      .lean();
+
+    return result;
+  }
+    async updateWalletBalance(clientId, amount) {
+    try {
+      const update = await clientModel.findByIdAndUpdate(
+        clientId,
+        { $inc: { walletBalance: -amount } },
+        { new: true }
+      );
+      if (!update) {
+        console.error(`Client with ID ${clientId} not found.`);
+        return null;
+      }
+      return update;
+    } catch (error) {
+      console.error("Error updating wallet balance:", error);
+      throw new Error("Failed to update wallet balance");
+    }
+  }
+    async getClientByUserId(clientId, selectFields = "") {
+    return await clientModel.findOne(clientId).select(selectFields);
+  }
 }
+
 
 export default new ClientRepository();

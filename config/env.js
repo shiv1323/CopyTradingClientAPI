@@ -56,6 +56,10 @@ const envSchema = Joi.object({
   AWS_IAM_ACCESS_KEY: Joi.string().allow('').optional(),
   AWS_IAM_SECRET_ACCESS_KEY: Joi.string().allow('').optional(),
   AWS_BUCKET_NAME: Joi.string().allow('').optional(),
+  VERIFY_USER_URL: Joi.string().required(),
+  PAYMENTGATWAY_BASEURL: Joi.string().required(),
+  PAYMENTGATWAY_SECRET_ACCESS_KEY: Joi.string().required(),
+  PAYMENTGATWAY_APPLICATION_ID: Joi.string().required(),
 }).unknown();
 
 const { error, value } = envSchema.validate(process.env);
@@ -114,4 +118,8 @@ export default {
   AWS_IAM_ACCESS_KEY: value.AWS_IAM_ACCESS_KEY,
   AWS_IAM_SECRET_ACCESS_KEY: value.AWS_IAM_SECRET_ACCESS_KEY,
   AWS_BUCKET_NAME: value.AWS_BUCKET_NAME,
+  VERIFY_USER_URL: value.VERIFY_USER_URL,
+  PAYMENTGATWAY_BASEURL: value.PAYMENTGATWAY_BASEURL,
+  PAYMENTGATWAY_SECRET_ACCESS_KEY: value.PAYMENTGATWAY_SECRET_ACCESS_KEY,
+  PAYMENTGATWAY_APPLICATION_ID: value.PAYMENTGATWAY_APPLICATION_ID,
 };

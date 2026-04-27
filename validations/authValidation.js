@@ -2,15 +2,44 @@ import { body } from 'express-validator';
 
 export const generateJWTLoginValidation = [
   body('token')
-    .notEmpty()
-    .withMessage('JWT token is required')
+    .optional()
     .isString()
     .withMessage('token must be a string'),
   body('domain')
-    .notEmpty()
-    .withMessage('domain is required')
+    .optional()
     .isString()
     .withMessage('domain must be a string'),
+  body().custom((_, { req }) => {
+    const token = req.body?.token ?? req.query?.token;
+    if (!token) {
+      throw new Error('JWT token is required');
+    }
+    return true;
+  }),
+  body().custom((_, { req }) => {
+    const domainFromBodyOrQuery = req.body?.domain ?? req.query?.domain;
+    if (domainFromBodyOrQuery) return true;
+
+    if (req.headers?.referer) {
+      try {
+        const refererUrl = new URL(req.headers.referer);
+        if (refererUrl.hostname) return true;
+      } catch (_error) {
+        // Ignore invalid referer and continue to origin check.
+      }
+    }
+
+    if (req.headers?.origin) {
+      try {
+        const originUrl = new URL(req.headers.origin);
+        if (originUrl.hostname) return true;
+      } catch (_error) {
+        // Ignore invalid origin URL.
+      }
+    }
+
+    throw new Error('domain is required');
+  }),
 ];
 export const validateLoginRequest = () => {
   return [

@@ -109,7 +109,7 @@ export const createDepositRequest = asyncHandler(async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.error("Please upload at least one file!", 400);
   }
-  const { id, whiteLabel, adminId } = req.user;
+  const { id, whiteLabel } = req.user;
   const fileCount = req.files.length;
   const uploadResults = [];
 
@@ -277,7 +277,6 @@ export const createDepositRequest = asyncHandler(async (req, res) => {
       const LedgerPayload = {
         transactionId,
         whiteLabel,
-        adminId: new mongoose.Types.ObjectId(adminId),
         accountType: "WALLET",
         clientId: id,
         fromAccount: {

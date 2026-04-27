@@ -1,8 +1,4 @@
-import { publicKey } from "../config/keyLoader.js";
-
-import { verifyUserAxios } from "../utils/verifyUserAxios.js";
 import {
-  verifyRSATokenData,
   generateRefreshToken as generateRsaRefreshToken,
   generateAccessToken,
 } from "../utils/jwt.js";
@@ -19,69 +15,32 @@ import {
   verifyRefreshToken,
 } from "../utils/authUtils.js";
 import bcrypt from "bcryptjs";
+import { LOGIN_TYPES } from "../config/constants.js";
+import env from "../config/env.js";
 
 
 export const generateJWTAndLogin = async (req, res) => {
 try {
-    // 1. Extract request data 
-    const { token, domain, sessionId} = req.body || req.query || {};
+    // 1. Pull context prepared by middlewares.
+    const payload = req.tokenPayload;
+    const whiteLabel = req.whiteLabel;
     const device = detectDevice(req.headers["user-agent"] ?? "UNKNOWN");
     const { clientType, deviceId } = getClientContext(req);
-    const loginSessionId = generateSessionId();
-
-    const loginActivityPayload = {
-      sessionId: loginSessionId,
-      loginTimestamp: new Date(),
-      ipAddress: req.ip,
-      clientType,
-      deviceDetails: { type: device, deviceId },
-      location: { country: null, city: null },
-      status: "IN_PROGRESS",
-    };
-
-    // 2. Validate token and retrieve user info
-    if (!token) {
-      return res.status(400).json({
-        success: false,
-        message: "JWT token is required in body.",
-      });
-    }
-    if (!domain) {
-        return res.status(400).json({
-            success: false,
-            message: "Domain is required",
-        });
-        }
-
-    // 3. Validate whiteLabel domain 
-    const whiteLabel = await whiteLabelRepository.findByDomain(domain);
-    if (!whiteLabel) {
-      return res.status(403).json({
-        success: false,
-        message:
-          "Invalid domain. This whiteLabel is not registered or inactive.",
-      });
-    }
-    const whiteLabelId = whiteLabel._id.toString();
-
-    // 4. Verify token and extract user info 
-    let payload;
-    try {
-      payload = verifyRSATokenData(token, publicKey);
-      const verifyUser = await verifyUserAxios({ userId: payload.userId });
-      if (!verifyUser.success) {
-        return res.status(400).json({
-          success: false,
-          message: verifyUser.message,
-        });
-      }
-    } catch (err) {
+    if (!payload) {
       return res.status(401).json({
         success: false,
         message: "Invalid or expired JWT token",
-        error: err.message,
       });
     }
+    if (!whiteLabel || !req.whiteLabelId) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid domain or WhiteLabel context",
+      });
+    }
+
+    // 2. Validate whiteLabel context.
+    const whiteLabelId = req.whiteLabelId;
 
     const { userId, 
         email, 
@@ -108,62 +67,44 @@ try {
         phoneNo,
         countryCode,
         country,
+        type: LOGIN_TYPES.SSO
     });
-
-    // ——— 6. Check blocked user ———
-    // if (ctUserData.isBlocked) {
-    //   await createLoginActivity({
-    //     ...loginActivityPayload,
-    //     status: "BLOCKED",
-    //     failureReason: "User Status Is Blocked!",
-    //     failureCode: HTTP_STATUS.UNAUTHORIZED,
-    //     sid: sessionId,
-    //   });
-    //   failedLogins.inc();
-    //   return ApiResponse.error(
-    //     res,
-    //     "Profile Has Been Blocked! Please reach out to our support team",
-    //     HTTP_STATUS.UNAUTHORIZED
-    //   );
-    // }
-
-    // ——— 7. Create login activity (login event only; no logoutTimestamp) ———
+    // // check for existing sessionId 
+    // let subSessionId = null;
+    // if(clientType === "WEB" && ctUserData.tokens?.web?.currentSessionId){
+    //   subSessionId = ctUserData.tokens.web.currentSessionId;
+    // } else if(clientType === "MOBILE" && ctUserData.tokens?.mobile?.currentSessionId){
+    //   subSessionId = ctUserData.tokens.mobile.currentSessionId;
+    // };
+     // ——— 8. Create session ———
+    const sesId = generateSessionId();
+    const sessionExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    
+    // ——— 9. Create refresh token ———
     const refreshToken = generateRsaRefreshToken({
+      id: ctUserData._id,
       userId: ctUserData.userId,
-      ctUserId: ctUserData._id,
+      whiteLabelId,
+      clientType,
+      sessionId: sesId,
+      sessionExpiry,
     });
     const refreshTokenExpiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const sesId = generateSessionId();
 
-    // await createLoginActivity({
-    //   ...loginActivityPayload,
-    //   status: "SUCCESS",
-    //   sessionId: sesId,
-    //   ipAddress: req.ip,
-    //   deviceDetails: { type: device, deviceId },
-    //   location: { country: null, city: null },
-    //   sid: sessionId,
-    // });
-
-     // ——— 8. Create session ———
-    // const sessionExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-    req.session.userId = ctUserData.userId;
-    req.session.name = name;
-    req.session.email = email;
-    req.session.whiteLabelId = whiteLabelId;
-    req.session.ctUserId = ctUserData._id.toString();
-    req.session.sessionId = sesId;
     // ——— 10. Generate tokens ———
     const accessToken = generateAccessToken({
-      ctUserId: ctUserData._id,
+      id: ctUserData._id,
       userId: ctUserData.userId,
-      name,
-      email,
+      whiteLabelId,
+      clientType,
+      sessionId: sesId,
+      sessionExpiry,
     });
 
     // ——— 11. Save tokens and session to user ———
-    let updateQuery = {};
+    let updateQuery = {
+      type: LOGIN_TYPES.SSO,
+    };
 
     if (clientType === "WEB") {
     updateQuery["tokens.web"] = {
@@ -172,7 +113,6 @@ try {
         expiresAt: refreshTokenExpiry,
         },
         currentSessionId: sesId,
-        subSessionId: null,
         lastLogoutAt: null,
     };
     } else if (clientType === "MOBILE") {
@@ -182,7 +122,6 @@ try {
         expiresAt: refreshTokenExpiry,
         },
         currentSessionId: sesId,
-        subSessionId: null,
         deviceId: deviceId,
         lastLogoutAt: null,
     };
@@ -192,27 +131,23 @@ try {
     $set: updateQuery,
     });
 
+    res.cookie("refreshToken", refreshToken, 
+      { httpOnly: true, 
+        secure: true, sameSite: "Strict", 
+        maxAge: 7 * 24 * 60 * 60 * 1000, }); 
+        
+    res.cookie("accessToken", accessToken, 
+      { httpOnly: true, 
+        secure: true, 
+        sameSite: "Strict", 
+        maxAge: 15 * 60 * 1000, });
+
     // ——— 12. Send response ———
     return res.json({
       success: true,
       message: "Login successful",
-      user: {
-        ctUserId: ctUserData._id,
-        userId: ctUserData.whiteLabelUserId,
-        loginType: ctUserData.loginType,
-        name,
-        email,
-        phone: ctUserData.phone,
-        country: ctUserData.country,
-        lastLoginAt: ctUserData.lastLoginAt,
-        lastActiveAt: ctUserData.lastActiveAt,
-      },
-      accessToken,
-      refreshToken,
-      whiteLabel: {
-        primaryColor: whiteLabel.primaryColor,
-        logo: whiteLabel.logo,
-      },
+      // accessToken,
+      // refreshToken,
     });
   } catch (error) {
     console.error("Error in generateJWTAndLogin:", error);
@@ -453,4 +388,48 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     },
     "Token refreshed successfully",
   );
+});
+
+export const authenticateOtp = asyncHandler(async (req, res) => {
+  const { id } = req.user;
+  const client = await clientProfileRepository.getClientById(id);
+  if (!client) {
+    return res.error("Client not found! Please refresh you token", 500);
+  }
+  const otpResult = await client.generateAndSendOTP();
+  const tempToken = jwt.sign(
+    {
+      email: client.email,
+      type: "withdraw_request",
+    },
+    process.env.TEMP_TOKEN_SECRET,
+    { expiresIn: "15m" },
+  );
+  const response = {
+    status: "Success!",
+    message: `OTP sent to your ${otpResult?.authMode} for verification.`,
+    otpSent: otpResult?.status,
+    tempToken: tempToken,
+  };
+  return res.customSuccess(response, 200);
+});
+
+export const authenticateOtpValidate = asyncHandler(async (req, res) => {
+  const { otpCode, tempToken } = req.body;
+  const { id } = req.user;
+  const client = await clientProfileRepository.getClientById(id);
+  if (!client) {
+    return res.error("Client not found! Please refresh you token", 500);
+  }
+  if (!client.validateOTP(otpCode)) {
+    return res.error("Invalid or Expired OTP", 400);
+  }
+  const decoded = jwt.verify(tempToken, env.TEMP_TOKEN_SECRET);
+  if (decoded.type !== "withdraw_request" || decoded.email !== client.email) {
+    return res.error("Token Invalid", 400);
+  }
+  client.TwoFactorCompletion.otpSecret = null;
+  client.TwoFactorCompletion.otpExpiresAt = null;
+  await client.save();
+  return res.success(null, "OTP validated successfully");
 });

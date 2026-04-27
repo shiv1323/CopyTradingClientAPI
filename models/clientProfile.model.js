@@ -4,7 +4,7 @@ import {
 } from "../utils/commonUtils.js";
 import { sendCustomEmail } from "../utils/commonUtils.js";
 import { decrypt, encrypt } from "../utils/authUtils.js";
-
+import { LOGIN_TYPES } from "../config/constants.js";
 const clientSchema = new mongoose.Schema(
   {
     userId: {
@@ -98,6 +98,14 @@ const clientSchema = new mongoose.Schema(
       type: Date,
       default: getUTCTime,
     },
+    walletBalance: {
+      type: Number,
+      default: 0,
+    },
+    walletCurrency: {
+      type: String,
+      default: "USD",
+    },
     TwoFactorCompletion: {
       emailOTP: {
         type: String,
@@ -115,6 +123,10 @@ const clientSchema = new mongoose.Schema(
         type: Date,
         default: null,
       },
+    },
+    type:{
+      type: String,
+      default: LOGIN_TYPES.SSO,
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,

@@ -13,7 +13,10 @@ import { sendCustomEmail } from "../../utils/commonUtils.js";
 import ForexGroupRepository from "../../repositories/forexGroupRepository.js";
 
 export const raiseRequest = asyncHandler(async (req, res) => {
-  const { id, whiteLabel, email, name } = req.user;
+  const { id, whiteLabel } = req.user;
+
+  const clientProfile = await clientProfileRepository.getClientById(id);
+
   const {
     masterUserId,
     masterTrAccout,
@@ -126,8 +129,8 @@ export const raiseRequest = asyncHandler(async (req, res) => {
   };
   const raised =
     await CTFollowRequestRepository.createFollowRequest(raiseRequestObj);
-  await sendCustomEmail(whiteLabel, "copy_trading_request_raised", [email], {
-    firstName: name || "N/A",
+  await sendCustomEmail(whiteLabel, "copy_trading_request_raised", [clientProfile.email], {
+    firstName: clientProfile.name || "N/A",
     masterId: masterUserId.toString().slice(-5) || "N/A",
     masterLogin: masterTrAccout || "N/A",
     selfLogin: slefTrAccount || "N/A",
@@ -315,7 +318,8 @@ export const requestClientAction = asyncHandler(async (req, res) => {
     1: "REASSIGN",
   };
 
-  const { whiteLabel, id, name, email } = req.user;
+  const { whiteLabel, id } = req.user;
+  const { email, name } = await clientProfileRepository.getClientById(id);
   const {
     action,
     masterId,
@@ -377,8 +381,7 @@ export const requestClientAction = asyncHandler(async (req, res) => {
 });
 
 export const getMasterTrAccountDropDown = asyncHandler(async (req, res) => {
-  const { whiteLabel } = req.user;
-  const { userId } = req.query;
+  const { whiteLabel, userId } = req.user;
   const masterId = await clientProfileRepository.getClientByUserId(
     {
       whiteLabel: whiteLabel,

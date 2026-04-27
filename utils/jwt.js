@@ -12,7 +12,7 @@ export const generateRSAToken = (payload, expiresIn = "5m") => {
   return jwt.sign(payload, privateKey, {
     algorithm: "RS256",
     expiresIn: expiresIn,
-    // issuer: JWT_ISSUER,
+    issuer: JWT_ISSUER,
   });
 };
 

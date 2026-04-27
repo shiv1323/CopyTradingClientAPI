@@ -10,4 +10,8 @@ const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
 };
 
-export { HTTP_STATUS };
+const LOGIN_TYPES = {
+SSO: "SSO",
+EMAIL: "EMAIL",
+};
+export { HTTP_STATUS, LOGIN_TYPES  };

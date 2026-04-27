@@ -9,12 +9,12 @@ import { getSelfRequestListAsMaster,actionOnSelfMasterRequest,getListOfOwnFollow
 
 const router = express.Router();
 
-router.get("/receivedRequests",authHandler, getSelfRequestListAsMaster);
+router.get("/receivedRequests",authHandler, getSelfRequestListAsMaster); // checked
 router.post("/receivedRequests/performAction",authHandler,actionOnSelfMasterRequest)
 
-router.get("/getOwnMasterDropDown",authHandler,getListOfOwnMasterLogins);
-router.post("/getOwnFollowers", authHandler, getListOfOwnFollowers);
-router.get("/getModulesCount", authHandler, getCTModuleCount);
+router.get("/getOwnMasterDropDown",authHandler,getListOfOwnMasterLogins); // checked
+router.post("/getOwnFollowers", authHandler, getListOfOwnFollowers); // checked
+router.get("/getModulesCount", authHandler, getCTModuleCount); // checked
 
 
 export default router;

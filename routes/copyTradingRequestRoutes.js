@@ -13,17 +13,17 @@ router.post(
   validateReq,
   authHandler,
   raiseRequest
-);
+);  // checked
 
-router.get("/tradecopy/getRequests",authHandler,getRequestList);
-router.post("/tradecopy/performAction",authHandler, requestClientAction);
-router.get("/tradecopy/getMasterTrAccountDropDown", authHandler, getMasterTrAccountDropDown);
+router.get("/tradecopy/getRequests",authHandler,getRequestList); // checked 
+router.post("/tradecopy/performAction",authHandler, requestClientAction);  // checked
+router.get("/tradecopy/getMasterTrAccountDropDown", authHandler, getMasterTrAccountDropDown);  // checked
 router.get("/tradecopy/getMasteruserIdSearch", authHandler, getMasteruserIdSearch);
 router.post("/tradecopy/markMasterTradingAccEligible", authHandler, markMasterTradingAccountEligible);
-router.post("/tradecopy/updateRulesConfig",updateRulesConfig(),validateReq, authHandler, setSelfFollowingAccountRules);
+router.post("/tradecopy/updateRulesConfig",updateRulesConfig(),validateReq, authHandler, setSelfFollowingAccountRules); // checked
 router.get("/tradecopy/getMasterRules", authHandler, getMasterRules);
 router.post("/tradecopy/setMasterRulesForAllFollowers",setMasterRulesForAllFollowersValidation(),validateReq, authHandler, setMasterRulesForAllFollowers);
-router.get("/tradecopy/getappliedRules", authHandler, fetchAppliedRules);
-router.get("/tradecopy/getCTEligibleFollowerAccounts", authHandler, getCTEligibleFollowerAccounts);
+router.get("/tradecopy/getappliedRules", authHandler, fetchAppliedRules); // checked
+router.get("/tradecopy/getCTEligibleFollowerAccounts", authHandler, getCTEligibleFollowerAccounts); // checked
 
 export default router;

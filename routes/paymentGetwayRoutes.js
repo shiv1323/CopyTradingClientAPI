@@ -9,9 +9,9 @@ import { depositAmountRules,submitTransactionRules } from "../validations/paymen
 
 const router = express.Router();
 router.use(authHandler);
-router.get('/getPaymentMethods', GetPaymentMethods);
+router.get('/getPaymentMethods', GetPaymentMethods); // checked
 router.get('/getPaymentMethodsTypes', getPaymentMethodsListDynamic);
-router.post('/initiatepayment',depositAmountRules(),validateReq, depositeAmountGatewayProcess);
+router.post('/initiatepayment',depositAmountRules(),validateReq, depositeAmountGatewayProcess); // checked
 router.post('/submit-transaction',submitTransactionRules(),validateReq, submitTransactionProcess);
 router.post('/payment-callback', callBackTransactionProcess);
 
