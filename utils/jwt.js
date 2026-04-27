@@ -27,6 +27,16 @@ export const verifyRSATokenData = (token, publicKey) => {
   }
 }
 
+export const verifyAccessTokenData = (token) => {
+  try {
+    return jwt.verify(token, JWT_SECRET, {
+      issuer: JWT_ISSUER,
+    });
+  } catch (error) {
+    throw new Error("Invalid or expired access token");
+  }
+};
+
 export const generateRefreshToken = (payload) => {
   return jwt.sign(payload, JWT_SECRET, {
     expiresIn: JWT_REFRESH_EXPIRY,

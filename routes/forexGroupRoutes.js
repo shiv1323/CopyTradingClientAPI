@@ -5,7 +5,7 @@ import {getGroupsConfigForWhiteLevels,getGroups} from '../controllers/forexGroup
 const router = express.Router();
 
 router.post('/getGroups',authHandler,getGroupsConfigForWhiteLevels);
-router.get('/getAvailGroups',authHandler,getGroups) //ok
+router.get('/getAvailGroups',authHandler,getGroups) // to be tested
 
 export default router;
 

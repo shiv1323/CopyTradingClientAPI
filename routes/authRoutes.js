@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { generateJWTAndLogin, login, refreshAccessToken, authenticateOtp } from '../controllers/authController.js';
+import { generateJWTAndLogin, login, refreshAccessToken, authenticateOtp,authenticateOtpValidate } from '../controllers/authController.js';
 import { validateWhiteLabel, verifyRSAToken } from '../middlewares/auth.js';
 import { generateJWTLoginValidation, validateLoginRequest } from '../validations/authValidation.js';
 import { handleValidationErrors } from '../middlewares/validation.js';

@@ -11,19 +11,38 @@ import WhiteLabel from "../../models/whiteLevel.model.js";
 import CtMasterRequestRepository from "../../repositories/ctMasterRequestRepository.js";
 import { sendCustomEmail } from "../../utils/commonUtils.js";
 import ForexGroupRepository from "../../repositories/forexGroupRepository.js";
+import { raiseFollowRequestSchema } from "../../validations/paramsValidation.js";
+import {
+  encryptTextMt5,
+} from "../../utils/authUtils.js";
 
 export const raiseRequest = asyncHandler(async (req, res) => {
   const { id, whiteLabel } = req.user;
-
-  const clientProfile = await clientProfileRepository.getClientById(id);
-
-  const {
+  const { error, value } = raiseFollowRequestSchema.validate(req.body);
+    
+  if (error) {
+    return res.error(error.details[0].message, 400);
+  };
+  const { pass, 
+    leverage, 
+    name, 
+    groupId,
     masterUserId,
     masterTrAccout,
-    slefTrAccount,
+    selfTrAccount,
     tradingCondition,
     ratio,
-  } = req.body;
+   } = value;
+  
+  const clientProfile = await clientProfileRepository.getClientById(id);
+
+  // const {
+  //   masterUserId,
+  //   masterTrAccout,
+  //   slefTrAccount,
+  //   tradingCondition,
+  //   ratio,
+  // } = req.body;
   const [
     masterExists,
     selfTrAccExists,
@@ -117,10 +136,14 @@ export const raiseRequest = asyncHandler(async (req, res) => {
       404,
     );
   const raiseRequestObj = {
+    password: encryptTextMt5(decrypt(pass)),
+    leverage, 
+    name, 
+    groupId,
     whiteLabel: whiteLabel,
     followerAccount: id,
     masterAccount: masterUserId,
-    followerTradingMId: slefTrAccount,
+    followerTradingMId: selfTrAccount,
     masterTradingMId: masterTrAccout,
     status: 0,
     requestedAt: moment().toISOString(),
@@ -133,7 +156,7 @@ export const raiseRequest = asyncHandler(async (req, res) => {
     firstName: clientProfile.name || "N/A",
     masterId: masterUserId.toString().slice(-5) || "N/A",
     masterLogin: masterTrAccout || "N/A",
-    selfLogin: slefTrAccount || "N/A",
+    selfLogin: selfTrAccount || "N/A",
     ctTradeMode: tradingCondition?.toUpperCase() || "N/A",
     value: ratio || "N/A",
   });

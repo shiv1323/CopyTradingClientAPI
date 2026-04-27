@@ -1,7 +1,12 @@
 import clientProfileRepository from "../repositories/clientProfileRepository.js";
-import { verifyToken } from "../utils/authUtils.js";
-import { verifyRSATokenData } from "../utils/jwt.js";
+import { verifyAccessTokenData, verifyRSATokenData } from "../utils/jwt.js";
 import { publicKey  } from "../config/keyLoader.js";
+const getCookieValue = (cookieHeader = "", cookieName) => {
+  if (!cookieHeader || !cookieName) return null;
+  const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
+  const match = cookies.find((cookie) => cookie.startsWith(`${cookieName}=`));
+  return match ? decodeURIComponent(match.split("=").slice(1).join("=")) : null;
+};
 // export const authHandler = async (req, res, next) => {
 //   let token;
 //   if (
@@ -108,34 +113,44 @@ import { publicKey  } from "../config/keyLoader.js";
 // };
 export const authHandler = async (req, res, next) => {
 try {
-    const token =
-      req.cookies.accessToken ||
-      req.headers.authorization?.split(" ")[1];
+    const accessTokenFromCookie =
+      req.cookies?.accessToken ||
+      getCookieValue(req.headers.cookie, "accessToken");
+    const token = accessTokenFromCookie || req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({ message: "No token" });
     }
-    const publicKeyValue = publicKey;
-    if (!publicKeyValue) {
-    return res.status(400).json({
-      success: false,
-      message: 'Public key is required',
-    });
-  }
-    const decoded = verifyRSATokenData(token, publicKeyValue);
+    let decoded;
+    try {
+      // Primary path for app login cookies/tokens.
+      decoded = verifyAccessTokenData(token);
+    } catch (accessTokenError) {
+      // Backward compatibility for RS256 tokens.
+      const publicKeyValue = publicKey;
+      if (!publicKeyValue) {
+        return res.status(400).json({
+          success: false,
+          message: "Public key is required",
+        });
+      }
+      decoded = verifyRSATokenData(token, publicKeyValue);
+    }
+    const { id, clientType, sessionId, iat } = decoded;
+    if (!id || !clientType || !sessionId) {
+      return res.status(401).json({ message: "Invalid token payload" });
+    }
 
     /**
        * Fetch user + validate:
        * - lastLogoutAt
        * - session binding
        */
-      const currentTime = Math.floor(Date.now() / 1000);
-      const iat = currentTime;
       const user =
       await clientProfileRepository.getClientLastLogoutByClientType(
-        decoded?.id,
+        id,
         iat,
-        decoded?.clientType
+        clientType
       );
 
        if (!user) {

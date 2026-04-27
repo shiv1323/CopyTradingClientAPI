@@ -1,4 +1,4 @@
-import CtMasterRequest from "../models/ctmasterRequest.model.js";
+import CtMasterRequest from "../models/ctMasterRequest.model.js";
 
 const CtMasterRequestRepository = {
   // Create a new master request
@@ -64,6 +64,25 @@ const CtMasterRequestRepository = {
       status: "APPROVED",
     })
       .select("masterId masterLogin")
+      .lean();
+  },
+
+    findApprovedMasterByLoginAndGroup: async (masterLogin, whiteLabelId) => {
+    return await CtMasterRequest.findOne({
+      masterLogin: String(masterLogin),
+      whiteLabel: whiteLabelId,
+      type: "mark",
+      status: "APPROVED",
+    })
+      .select("masterId masterLogin groupId")
+      .populate({
+        path: "groupId",
+        select: "groupName group managerType description linkedGroupIds",
+        populate:{
+          path: "linkedGroupIds",
+          select: "groupName group managerType description"
+        }
+      })
       .lean();
   },
 

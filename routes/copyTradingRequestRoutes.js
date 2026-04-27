@@ -13,7 +13,7 @@ router.post(
   validateReq,
   authHandler,
   raiseRequest
-);  // checked
+);  // to be tested
 
 router.get("/tradecopy/getRequests",authHandler,getRequestList); // checked 
 router.post("/tradecopy/performAction",authHandler, requestClientAction);  // checked

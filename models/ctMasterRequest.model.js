@@ -7,7 +7,7 @@ const CtMasterRequestSchema = new Schema(
   {
     masterLogin: {
       type: String,
-      required: true,
+      default: null,
       trim: true,
     },
     whiteLabel: {
@@ -20,6 +20,19 @@ const CtMasterRequestSchema = new Schema(
       ref: 'clientProfile',
       required: true,
     },
+    groupId:{
+      type: Types.ObjectId,
+      ref: 'forexGroups',
+      required: true,
+    },
+    masterName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    password: {type: String, default: null},
+    leverage: { type: String, default: null },
+    currency: { type: String, default: "USD" },
     status: {
       type: String,
       enum: CT_MASTER_REQUEST_STATUS_ENUM,

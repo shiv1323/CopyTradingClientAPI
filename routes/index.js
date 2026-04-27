@@ -5,6 +5,7 @@ import tradingAccountRoutes from './tradingAccountRoutes.js';
 import forexGroupRoutes from './forexGroupRoutes.js';
 import clientReportRoutes from './clientReportRoutes.js';
 import profileRoutes from './profileRoutes.js';
+import ctMasterRequestRoutes from './ctMasterRequestRoutes.js';
 import paymentRoutes from './paymentGetwayRoutes.js';
 const router = express.Router();
 // Health check
@@ -17,4 +18,5 @@ router.use("/forexGroupConfig", forexGroupRoutes);
 router.use("/tradeHistory", clientReportRoutes);
 router.use('/profile',profileRoutes);
 router.use('/payment',paymentRoutes);
+router.use('/ctMasterRequest', ctMasterRequestRoutes);
 export default router;

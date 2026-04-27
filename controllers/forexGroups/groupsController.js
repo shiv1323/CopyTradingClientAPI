@@ -9,6 +9,7 @@ import {
 } from "../../wrapperConfig/mt5WrapperUtils.js";
 import userRepository from "../../repositories/userRepository.js";
 import forexGroupMapping from "../../repositories/forexGroupMapping.js";
+import CtMasterRequestRepository from "../../repositories/ctMasterRequestRepository.js";
 
 export const getGroupsConfigForWhiteLevels = asyncHandler(async (req, res) => {
   const { groupCount } = req.body;
@@ -39,50 +40,75 @@ export const getGroupsConfigForWhiteLevels = asyncHandler(async (req, res) => {
 });
 
 export const getGroups = asyncHandler(async (req, res) => {
-  const { groupType= 'REAL' } = req.query;
+  const { groupType, roleType , masterLogin } = req.query;
   // console.log(groupType)
-  let { whiteLabel, adminId } = req.user;
-  whiteLabel = new mongoose.Types.ObjectId(whiteLabel);
+  let { whiteLabelId } = req.user;
+
+  const whiteLabel = new mongoose.Types.ObjectId(whiteLabelId);
 
   let options = {
     whiteLabel: whiteLabel,
     status: true,
   };
+
   let Groups = [];
-
-  if (adminId) {
-    const userData = await userRepository.getUserByFilter(
-      {
-        _id: adminId,
-        whiteLabel,
-      },
-      "userId role",
-    );
-
-    if (!userData) {
-      return res.error("Invalid Oversee user");
-    }
-
-    if (userData?.role.roleName === "Administrator") {
-      if (groupType?.toLowerCase() === "demo") {
-        options.managerType = "demo";
-        options.isDefault = true;
-      } else {
-        options.managerType = "real";
-        options.isDefault = true;
-      }
-    } 
-  } else {
-    if (groupType?.toLowerCase() === "demo") {
+  let finalRoleType = roleType?.toLowerCase() || "master";
+  if(finalRoleType === "master"){
+    if(groupType?.toLowerCase() === "demo"){
       options.managerType = "demo";
       options.isDefault = true;
     } else {
-      options.managerType = "real";
-      options.isDefault = true;
+    options.managerType = "real";
+    options.isDefault = true;
     }
-  }
+  } else if(finalRoleType === "follower"){
+    if(!masterLogin){
+      return res.error("Master Login is required for follower role type", 400);
+    }
+    const masterGroupMapping = await CtMasterRequestRepository.findApprovedMasterByLoginAndGroup(masterLogin, whiteLabel);
 
+    if(!masterGroupMapping){
+      return res.error("No approved master found with the provided login and white label", 404);
+    }
+    return res.success({ Data: masterGroupMapping }, "Groups Fetched for follower", 200);
+  };
+
+  // if (adminId) {
+  //   const userData = await userRepository.getUserByFilter(
+  //     {
+  //       _id: adminId,
+  //       whiteLabel,
+  //     },
+  //     "userId role",
+  //   );
+
+  //   if (!userData) {
+  //     return res.error("Invalid Oversee user");
+  //   }
+
+  //   if (userData?.role.roleName === "Administrator") {
+  //     if (groupType?.toLowerCase() === "demo") {
+  //       options.managerType = "demo";
+  //       options.isDefault = true;
+  //     } else {
+  //       options.managerType = "real";
+  //       options.isDefault = true;
+  //     }
+  //   } 
+  // } else {
+  //   if (groupType?.toLowerCase() === "demo") {
+  //     options.managerType = "demo";
+  //     options.isDefault = true;
+  //   } else {
+  //     options.managerType = "real";
+  //     options.isDefault = true;
+  //   }
+  // }
+  
   Groups = await forexGroupRepository.findGroupByOptions(options);
+  if (Groups.length < 1) {
+    return res.error("No Groups Found", 400);
+  }
   let data = [];
   Groups.map((group) => {
     let temp = {};
