@@ -56,10 +56,8 @@ export const getGroups = asyncHandler(async (req, res) => {
   if(finalRoleType === "master"){
     if(groupType?.toLowerCase() === "demo"){
       options.managerType = "demo";
-      options.isDefault = true;
     } else {
     options.managerType = "real";
-    options.isDefault = true;
     }
   } else if(finalRoleType === "follower"){
     if(!masterLogin){

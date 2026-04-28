@@ -17,7 +17,7 @@ import {
 } from "../../utils/authUtils.js";
 
 export const raiseRequest = asyncHandler(async (req, res) => {
-  const { id, whiteLabel } = req.user;
+  const { id, whiteLabelId } = req.user;
   const { error, value } = raiseFollowRequestSchema.validate(req.body);
     
   if (error) {
@@ -52,45 +52,45 @@ export const raiseRequest = asyncHandler(async (req, res) => {
     doesAlreadyRequestExists,
   ] = await Promise.all([
     tradingAccountRepository.getOneMasterTradingAccountByField({
-      ClientId: new mongoose.Types.ObjectId(masterUserId),
-      WhiteLabel: whiteLabel,
-      Login: masterTrAccout,
-      IsMasterAccount: true,
+      clientId: new mongoose.Types.ObjectId(masterUserId),
+      whiteLabel: whiteLabelId,
+      login: masterTrAccout,
+      importScriptssMasterAccount: true,
     }),
     tradingAccountRepository.getOneFollowerTradingAccountByField({
       ClientId: id,
-      WhiteLabel: whiteLabel,
-      Login: slefTrAccount,
-      IsMasterAccount: false,
+      whiteLabel: whiteLabelId,
+      login: selfTrAccount,
+      isMasterAccount: false,
     }),
     CTFollowRequestRepository.getRequestsOfFollower({
-      whiteLabel: whiteLabel,
+      whiteLabel: whiteLabelId,
       followerAccount: id,
-      followerTradingMId: slefTrAccount,
+      followerTradingMId: selfTrAccount,
       status: 0,
       active: true,
     }),
 
     CTFollowRequestRepository.getRequestsOfFollower({
-      whiteLabel: whiteLabel,
+      whiteLabel: whiteLabelId,
       followerAccount: id,
       masterAccount: masterUserId,
       masterTradingMId: masterTrAccout,
-      followerTradingMId: slefTrAccount,
+      followerTradingMId: selfTrAccount,
       status: { $in: [0, 1, 2] },
       active: true,
     }),
     tradingAccountRepository.fetchTradingAccountFund({
-      ClientId: id,
-      WhiteLabel: whiteLabel,
-      Login: slefTrAccount,
-      IsMasterAccount: false,
+      clientId: id,
+      whiteLabel: whiteLabelId,
+      login: selfTrAccount,
+      isMasterAccount: false,
     }),
     CtMasterRequestRepository.doesRequestExists({
-      masterLogin: slefTrAccount,
+      masterLogin: selfTrAccount,
       masterId: id,
       status: "PENDING",
-      whiteLabel: whiteLabel,
+      whiteLabel: whiteLabelId,
     }),
   ]);
   if (doesAlreadyRequestExists) {
@@ -140,7 +140,7 @@ export const raiseRequest = asyncHandler(async (req, res) => {
     leverage, 
     name, 
     groupId,
-    whiteLabel: whiteLabel,
+    whiteLabel: whiteLabelId,
     followerAccount: id,
     masterAccount: masterUserId,
     followerTradingMId: selfTrAccount,
