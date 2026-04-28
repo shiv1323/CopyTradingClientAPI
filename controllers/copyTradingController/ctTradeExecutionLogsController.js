@@ -4,7 +4,7 @@ import ctTradeExecutionLogRepository from "../../repositories/ctTradeExecutionLo
 import CtMasterRepository from "../../repositories/ctMastersRepository.js";
 
 export const getTradeExecutionLogs = asyncHandler(async (req, res) => {
-  const { id, whiteLabel } = req.user;
+  const { id, whiteLabelId } = req.user;
   const {
     from,
     to,
@@ -24,7 +24,7 @@ export const getTradeExecutionLogs = asyncHandler(async (req, res) => {
   } = req.query;
   const filter = {
     subscriberClientId: id,
-    whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
   };
   if (masterAccount) {
     filter.master = masterAccount;
@@ -91,10 +91,10 @@ export const getTradeExecutionLogs = asyncHandler(async (req, res) => {
 });
 
 export const executionTradeLogDropDowns = asyncHandler(async (req, res) => {
-  const { id, whiteLabel } = req.user;
+  const { id, whiteLabelId } = req.user;
   const filter = {
     "followers.id": new mongoose.Types.ObjectId(id),
-    whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
   };
   const fetchSelfAllMastersAndFollowers = await CtMasterRepository.findAllDropDowns(filter);
   if (!fetchSelfAllMastersAndFollowers.length) {

@@ -16,10 +16,10 @@ import paymentCurrencyRepository from "../repositories/paymentCurrencyRepository
 import paymentGetwayRepository from "../repositories/paymentGetwayRepository.js";
 
 export const getBankAccountsList = asyncHandler(async (req, res) => {
-  let { whiteLabel } = req.user;
+  let { whiteLabelId } = req.user;
 
   const filter = {
-    whiteLabel: whiteLabel,
+    whiteLabel: whiteLabelId,
     status: "ACTIVE",
   };
 
@@ -41,10 +41,10 @@ export const getBankAccountsList = asyncHandler(async (req, res) => {
 });
 
 export const getUpiAccountsList = asyncHandler(async (req, res) => {
-  let { whiteLabel } = req.user;
+  let { whiteLabelId } = req.user;
 
   const filter = {
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     status: "ACTIVE",
   };
 

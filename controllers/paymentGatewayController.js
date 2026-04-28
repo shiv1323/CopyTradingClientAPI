@@ -24,10 +24,10 @@ const application_id = env.PAYMENTGATWAY_APPLICATION_ID;
 
 export const GetPaymentMethods = async (req, res) => {
   try {
-    const { whiteLabel } = req.user;
+    const { whiteLabelId } = req.user;
     const { type = "Deposit" } = req.query;
     const PaymentMethods = await paymentMethodRepository.getPaymentMethods(
-      whiteLabel,
+      new mongoose.Types.ObjectId(whiteLabelId),
       type
     );
     const formattedData = PaymentMethods.map((item) => {
@@ -45,9 +45,9 @@ export const GetPaymentMethods = async (req, res) => {
 
 export const getPaymentMethodsList = async (req, res) => {
   try {
-    const { whiteLabel } = req.user;
+    const { whiteLabelId } = req.user;
     const PaymentMethods =
-      await paymentMethodRepository.getPaymentMethodsTypes(whiteLabel);
+      await paymentMethodRepository.getPaymentMethodsTypes(new mongoose.Types.ObjectId(whiteLabelId));
     //   console.log(activity);
     return res.success(PaymentMethods, "Success", 200);
   } catch (error) {
@@ -141,7 +141,7 @@ const saveTransactionReport = async (reportData) => {
 
 // initiate and walletaddress
 export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
-  const { id, userId, whiteLabel } = req.user;
+  const { id, userId, whiteLabelId } = req.user;  
   const {
     amount,
     crypto_currency,
@@ -167,7 +167,7 @@ export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
       await paymentGetwayRepository.getPaymentMethodsByFilter({
         Name: "Crypto",
         type: "Deposit",
-        whiteLabel: whiteLabel,
+        whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
       });
 
     if (!paymentMethodData?.status) {
@@ -231,7 +231,7 @@ export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
 
     const { wallet_address, token_address } = walletResponse.data?.data;
     const transactionData = {
-      whiteLabel,
+      whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
       clientId: id,
       userAmount: amount,
       currency,
@@ -254,7 +254,7 @@ export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
       if (username === `${userId}:investmentWallet`) {
         if (clientWallet) {
           req.body.transactionType = "DEPOSIT";
-          req.body.whiteLabel = whiteLabel;
+          req.body.whiteLabel = new mongoose.Types.ObjectId(whiteLabelId);
           req.body.accountType = "investmentWallet";
           req.body.paymentStatus = "DEPOSIT";
           req.body.transactionId = transfer_reference_id;
@@ -289,7 +289,7 @@ export const depositeAmountGatewayProcess = asyncHandler(async (req, res) => {
           accountType: "WALLET",
           transactionId: transfer_reference_id,
           transactionAmount: amount,
-          whiteLabel,
+          whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
           clientId: id,
           fromAccount: {
             type: payment_options[0]?.payment_method_details?.blockchain,

@@ -138,10 +138,10 @@ export const depositeAmountProcess = asyncHandler(async (req, res) => {
 });
 export const withDrawlAmountProcess = asyncHandler(async (req, res) => {
   // console.log("here");
-  const { id, userId, whiteLabel } = req.user;
+  const { id, userId, whiteLabelId } = req.user;
   const totalGroups = await forexGroupRepository.findGroupByOptions(
     {
-      WhiteLabel: whiteLabel,
+      WhiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
       ManagerType: "real",
     },
     "GroupName MinimumDepositeLimit"
@@ -166,14 +166,14 @@ export const withDrawlAmountProcess = asyncHandler(async (req, res) => {
     req,
     groupDict,
     id,
-    whiteLabel,
+    new mongoose.Types.ObjectId(whiteLabelId),
   );
   if (resp?.success) {
     const saveTransactions = resp?.result?.transactionReports.map(
       async (transactionReport) => {
         const newTransactionHistoryRecord = {
           clientId: id,
-          whiteLabel: whiteLabel,
+          whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
           transactionId: transactionId,
           accountType: transactionReport.accountType,
           fromAccount: transactionReport.fromAccount,
@@ -307,7 +307,7 @@ const buildTransactionPipeline = ({
 };
 
 export const getTransactionHistory = asyncHandler(async (req, res) => {
-  let { id, whiteLabel } = req.user;
+  let { id, whiteLabelId } = req.user;
   let {
     fromDate,
     toDate,
@@ -319,11 +319,11 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
   } = req.body;
 
   const userMId = new mongoose.Types.ObjectId(id);
-  whiteLabel = new mongoose.Types.ObjectId(whiteLabel);
+  whiteLabel = new mongoose.Types.ObjectId(whiteLabelId);
 
   const pipeline = buildTransactionPipeline({
     userMId,
-    whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     fromDate,
     toDate,
     transactionType,
@@ -356,7 +356,7 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
   const getWithdrawRequest =
     await withdrawlRequestsRepository.getWithdrawRequestByWhiteLabel(
       userMId,
-      whiteLabel
+      new mongoose.Types.ObjectId(whiteLabelId),
     );
 
   const withdrawalPaymentMeathodDict = getWithdrawRequest?.reduce(
@@ -393,7 +393,7 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
       to: toAccount,
       clientDetails: {
         clientId: transaction.clientId,
-        whiteLabelId: transaction.whiteLabel,
+        whiteLabelId: new mongoose.Types.ObjectId(whiteLabelId),
       },
       transactionDetails: {
         transactionId: transaction.transactionId,
@@ -486,7 +486,7 @@ export const getClientOverAllFund = asyncHandler(async (req, res) => {
 });
 export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
   const transactionId = uuidv4();
-  const { whiteLabel, id, userId } = req.user;
+  const { whiteLabelId, id, userId } = req.user;
   // console.log(req.user);
 
   const walletBalance = await clientProfileRepository.findOneClientSelectedField(id,walletBalance);
@@ -507,7 +507,7 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
   const walletBalanceInt = Number(walletBalance);
 
   let payMethodFilter = {
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     type: "Withdrawal",
   };
 
@@ -527,7 +527,7 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
   }
 
   const currencyData = await paymentCurrencyRepository.getCurrency({
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     paymentMethod:
       requestType.toUpperCase() === "BANK"
         ? "Bank"
@@ -555,7 +555,7 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
     return res.error("Insufficient Balance in the wallet", 400);
   }
   const newObj = {
-    whiteLabel: new mongoose.Types.ObjectId(whiteLabel),
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     requestId: transactionId,
     userId: userId,
     paymentMethod: paymentMethod,
@@ -602,7 +602,7 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
   }
   const withdrawRequestReport = {
     clientId: id,
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     transactionId: transactionId,
     accountType: "WALLET",
     fromAccount: {
@@ -674,12 +674,12 @@ export const getMinimumDepositeByGroupId = asyncHandler(async (req, res) => {
 });
 
 export const getPaymentCurrencyList = asyncHandler(async (req, res) => {
-  const { whiteLabel } = req.user;
+  const { whiteLabelId } = req.user;
   const { paymentMethodId } = req.query;
 
   const filter = {
     paymentMethodId: new mongoose.Types.ObjectId(paymentMethodId),
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId), 
     status: true,
   };
 
@@ -699,12 +699,12 @@ export const getPaymentCurrencyList = asyncHandler(async (req, res) => {
 });
 
 export const checkPaymentMethodStatus = asyncHandler(async (req, res) => {
-  const { whiteLabel } = req.user;
+  const { whiteLabelId } = req.user;
   const { paymentMethod, type } = req.query;
 
   const filter = {
     Name: paymentMethod,
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     type: type,
   };
 

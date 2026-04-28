@@ -307,7 +307,15 @@ const data = await tradingAccountRepository.getAllTradingAccountsByUniqueKey(
 };
 
 export const refreshAccessToken = asyncHandler(async (req, res) => {
-  const { refreshToken } = req.body;
+  const refreshToken =
+    req.cookies?.refreshToken ||
+    req.headers?.cookie
+      ?.split(";")
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith("refreshToken="))
+      ?.split("=")
+      .slice(1)
+      .join("=");
 
   if (!refreshToken) {
     return res.error("No refresh token provided", 400);
@@ -321,7 +329,6 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 
   const { id, clientType } = decoded;
-  const sessionId = generateSessionId();
 
   if (!clientType) {
     return res.error("Client type missing in token", 400);
@@ -332,12 +339,13 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     return res.error("Client not found", 404);
   }
 
-  const tokenBucket =
-    clientType === "WEB" ? client.tokens?.web : client.tokens?.mobile;
+  const tokenPath = clientType === "WEB" ? "tokens.web" : "tokens.mobile";
+  const tokenBucket = clientType === "WEB" ? client.tokens?.web : client.tokens?.mobile;
 
   if (!tokenBucket || tokenBucket.refreshToken?.token !== refreshToken) {
     return res.error("Session expired or logged in from another device", 401);
   }
+  const sessionId = generateSessionId();
 
   const newAccessToken = generateToken(
     client._id,
@@ -356,38 +364,79 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
     clientType,
   );
 
-  tokenBucket.refreshToken = {
-    token: newRefreshToken,
-    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+  const updateData = {
+    [`${tokenPath}.refreshToken`]: {
+      token: newRefreshToken,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    },
+    [`${tokenPath}.currentSessionId`]: sessionId,
+    [`${tokenPath}.subSessionId`]: sessionId,
+    [`${tokenPath}.lastLogoutAt`]: null,
   };
 
-  tokenBucket.currentSessionId = sessionId;
-  tokenBucket.subSessionId = sessionId;
-  tokenBucket.lastLogoutAt = null;
-  if (clientType === "MOBILE") {
-    tokenBucket.deviceId = null;
-  }
+  await clientProfileRepository.updateOneRecord(
+    { _id: client._id, [`${tokenPath}.refreshToken.token`]: refreshToken },
+    { $set: updateData },
+  );
 
-  await client.save();
-
-  if (clientType === "WEB") {
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-  }
+  res.cookie("accessToken", newAccessToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie("refreshToken", newRefreshToken, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
 
   return res.success(
-    {
-      refreshed_Token: {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      },
-    },
+    {},
     "Token refreshed successfully",
   );
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  const { id, clientType, sessionId } = req.user || {};
+
+  if (!id || !clientType || !sessionId) {
+    return res.error("Invalid user session", 400);
+  }
+
+  const tokenPath = clientType === "WEB" ? "tokens.web" : "tokens.mobile";
+  const now = new Date();
+
+  const updateResult = await clientProfileRepository.updateOneRecord(
+    { _id: id, [`${tokenPath}.currentSessionId`]: sessionId },
+    {
+      $set: {
+        [`${tokenPath}.lastLogoutAt`]: now,
+        [`${tokenPath}.refreshToken.token`]: null,
+        [`${tokenPath}.refreshToken.expiresAt`]: null,
+        [`${tokenPath}.currentSessionId`]: null,
+        [`${tokenPath}.subSessionId`]: null,
+      },
+    },
+  );
+
+  if (!updateResult?.matchedCount) {
+    return res.error("Session mismatch or already logged out", 401);
+  }
+
+  res.clearCookie("accessToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
+  res.clearCookie("refreshToken", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+  });
+
+  return res.success({}, "Logout successful");
 });
 
 export const authenticateOtp = asyncHandler(async (req, res) => {

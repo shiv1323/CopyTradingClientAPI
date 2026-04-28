@@ -173,7 +173,7 @@ const STATUS_ARRAY = [
 ];
 
 export const getRequestList = asyncHandler(async (req, res) => {
-  const { whiteLabel, id } = req.user;
+  const { whiteLabelId, id } = req.user;
   const statusMap = {
     PENDING: 0,
     APPROVED: 2,
@@ -182,7 +182,7 @@ export const getRequestList = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 100;
   const query = {
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     followerAccount: id,
     status: 2,
   };
@@ -341,7 +341,7 @@ export const requestClientAction = asyncHandler(async (req, res) => {
     1: "REASSIGN",
   };
 
-  const { whiteLabel, id } = req.user;
+  const { whiteLabelId, id } = req.user;
   const { email, name } = await clientProfileRepository.getClientById(id);
   const {
     action,
@@ -358,13 +358,13 @@ export const requestClientAction = asyncHandler(async (req, res) => {
   switch (actionMap[action]) {
     case "STOP":
       await handleStopCopying(res, {
-        whiteLabel,
+        whiteLabelId,
         masterId: new mongoose.Types.ObjectId(masterId),
         followerLogin,
         masterLogin,
         requestId: new mongoose.Types.ObjectId(requestId),
       });
-      sendCustomEmail(whiteLabel, "copy_trading_stopped_from_client", [email], {
+      sendCustomEmail(whiteLabelId, "copy_trading_stopped_from_client", [email], {
         firstName: name || "N/A",
         masterId: masterId?.toString().slice(-5) || "N/A",
         masterLogin: masterLogin || "N/A",
@@ -376,7 +376,7 @@ export const requestClientAction = asyncHandler(async (req, res) => {
 
     case "REASSIGN":
       await handleReassignMaster(res, {
-        whiteLabel,
+        whiteLabelId,
         masterId: new mongoose.Types.ObjectId(masterId),
         followerLogin,
         followerAccount: id,
@@ -387,7 +387,7 @@ export const requestClientAction = asyncHandler(async (req, res) => {
         oldMasterId: new mongoose.Types.ObjectId(oldMasterId),
         ratio,
       });
-      sendCustomEmail(whiteLabel, "CT_master_reassign", [email], {
+      sendCustomEmail(whiteLabelId, "CT_master_reassign", [email], {
         oldMasterId: oldMasterId?.toString().slice(-5) || "N/A",
         oldMasterLogin: oldMasterLogin || "N/A",
         newMasterId: masterId?.toString().slice(-5) || "N/A",
@@ -404,10 +404,10 @@ export const requestClientAction = asyncHandler(async (req, res) => {
 });
 
 export const getMasterTrAccountDropDown = asyncHandler(async (req, res) => {
-  const { whiteLabel, userId } = req.user;
+  const { whiteLabelId, userId } = req.user;
   const masterId = await clientProfileRepository.getClientByUserId(
     {
-      whiteLabel: whiteLabel,
+      whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
       userId: Number(userId),
     },
     "_id",
@@ -416,7 +416,7 @@ export const getMasterTrAccountDropDown = asyncHandler(async (req, res) => {
     return res.error("Invalid Master User ID", 404);
   }
   const getTrAcc = await tradingAccountRepository.getOneTradingAccountByField(
-    { WhiteLabel: whiteLabel, ClientId: masterId?._id, IsMasterAccount: true },
+    { WhiteLabel: new mongoose.Types.ObjectId(whiteLabelId), ClientId: masterId?._id, IsMasterAccount: true },
     ["Login", "Name", "ClientId"],
   );
   return res.success(
@@ -466,7 +466,7 @@ export const markMasterTradingAccountEligible = asyncHandler(
 );
 
 export const setSelfFollowingAccountRules = asyncHandler(async (req, res) => {
-  const { whiteLabel } = req.user;
+  const { whiteLabelId } = req.user;
   const {
     symbols,
     inverseCopy,
@@ -497,7 +497,7 @@ export const setSelfFollowingAccountRules = asyncHandler(async (req, res) => {
         {
           status: 2,
           active: true,
-          whiteLabel: whiteLabel,
+          whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
           masterAccount: new mongoose.Types.ObjectId(masterAccountId),
           followerTradingMId: followerLoginId,
         },
@@ -525,7 +525,7 @@ export const setSelfFollowingAccountRules = asyncHandler(async (req, res) => {
   const result = await CTMastersRepository.updateFollowersRule(
     masterAccountId,
     followerLoginId,
-    whiteLabel,
+    new mongoose.Types.ObjectId(whiteLabelId),
     updateData,
   );
   if (result.modifiedCount === 0) {
@@ -668,10 +668,10 @@ export const setMasterRulesForAllFollowers = asyncHandler(async (req, res) => {
 });
 
 export const fetchAppliedRules = asyncHandler(async (req, res) => {
-  const { whiteLabel, id } = req.user;
+  const { whiteLabelId, id } = req.user;
   const { masterAccountId, followerLoginId, masterLoginId } = req.query;
   const rules = await CTMastersRepository.getFollowersByMasterId({
-    whiteLabel: whiteLabel,
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     loginId: masterLoginId,
     masterAccountId: new mongoose.Types.ObjectId(masterAccountId),
   });
@@ -717,10 +717,10 @@ export const fetchAppliedRules = asyncHandler(async (req, res) => {
 });
 
 export const getCTEligibleFollowerAccounts = asyncHandler(async (req, res) => {
-  const { whiteLabel, id } = req.user;
+  const { whiteLabelId, id } = req.user;
   const getTradingAcc =
     await tradingAccountRepository.getTradingAccountsOfEligibleFollowers(
-      whiteLabel,
+      new mongoose.Types.ObjectId(whiteLabelId),
       id,
     );
   if (!getTradingAcc || getTradingAcc.length === 0) {

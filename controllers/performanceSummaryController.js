@@ -11,9 +11,9 @@ import { MTAPI_ROUTES } from "../config/mtTerminalConstanats.js";
 
 
 export const getTrAccountDdown = asyncHandler(async (req, res) => {
-  const { id, whiteLabel, userId } = req.user;
+  const { id, whiteLabelId, userId } = req.user;
   const filter = {
-    whiteLabel: whiteLabel,
+    whiteLabel: whiteLabelId,
     clientId: id,
   };
   const trAccountDdown =
@@ -28,7 +28,7 @@ export const getTrAccountDdown = asyncHandler(async (req, res) => {
         return {
           id: acc?._id,
           ClientId: acc?.ClientId,
-          WhiteLabel: acc?.WhiteLabel,
+          WhiteLabel: whiteLabelId,
           Login: `${groupSuffix} ${acc?.Login}`,
         };
       }
@@ -96,7 +96,7 @@ const getUnrealisedPLandEquity = async(clientId,accountId,user,fromDate,toDate)=
 }
 
 export const getSummaryReport = asyncHandler(async (req, res) => {
-  const { id, whiteLabel } = req.user;
+  const { id, whiteLabelId } = req.user;
   let { accountId , fromDate, toDate } = req.query;
   // let from = new Date(fromDate);
   // let to = new Date(toDate);
@@ -107,7 +107,7 @@ export const getSummaryReport = asyncHandler(async (req, res) => {
   toDate = new Date(toDate);
   //console.log(fromDate,toDate)
   let filter = {
-    whiteLabel : whiteLabel,
+    whiteLabel : whiteLabelId,
     clientId : id,
     closingTime : {$gte: fromDate, $lte: toDate }
   };
