@@ -18,7 +18,7 @@ import { raiseMasterRequestSchema } from "../../validations/paramsValidation.js"
 import clientProfileRepository from "../../repositories/clientProfileRepository.js";
 
 export const raiseRequestCtMaster = asyncHandler(async (req, res) => {
-  const { id, whiteLabelId } = req.user;
+  const { id, whiteLabel } = req.user;
   const clientProfile = await clientProfileRepository.getClientById(id);
   const email = clientProfile.email;
   const { error, value } = raiseMasterRequestSchema.validate(req.body);
@@ -28,16 +28,16 @@ export const raiseRequestCtMaster = asyncHandler(async (req, res) => {
   }
   const { pass, leverage, name, groupId } = value;
   let masterAccountId = null;
-
+let whiteLabelId = new mongoose.Types.ObjectId(whiteLabel);
   const newObj = {
     // masterLogin:  null,
-    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId) || null,
+    whiteLabel: whiteLabelId || null,
     masterId: id || null,
     masterName: name || null,
     requestedAt: new Date(),
     completedOn: null,
     password: encryptTextMt5(pass),
-    type: "mark",
+    type: "MARK",
     leverage: leverage,
     groupId: new mongoose.Types.ObjectId(groupId),
   };

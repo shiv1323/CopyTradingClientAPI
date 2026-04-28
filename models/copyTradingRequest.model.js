@@ -7,13 +7,13 @@ const CTFollowRequestSchema = new Schema(
   {
     whiteLabel: {
       type: Types.ObjectId,
-      ref: "WhiteLabel",
+      ref: "whiteLabel",
       required: true,
     },
     followerAccount: {
       type: Types.ObjectId,
       required: true,
-      ref: "Client",
+      ref: "clientProfile",
     },
     groupId:{
       type: Types.ObjectId,
@@ -31,7 +31,7 @@ const CTFollowRequestSchema = new Schema(
     masterAccount: {
       type: Types.ObjectId,
       required: true,
-      ref: "Client",
+      ref: "clientProfile",
     },
     followerTradingMId: {
       type: String,
@@ -85,7 +85,7 @@ const CTFollowRequestSchema = new Schema(
       default: false
     }
   },
-  { collection: "CTFollowRequests" }
+  { collection: "ctFollowRequests" }
 );
 CTFollowRequestSchema.index(
   {
@@ -103,4 +103,4 @@ CTFollowRequestSchema.index(
   }
 );
  
-export default model("CTMasterFollowRequest", CTFollowRequestSchema);
+export default model("ctFollowRequests", CTFollowRequestSchema);

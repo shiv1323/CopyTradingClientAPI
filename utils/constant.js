@@ -18,7 +18,7 @@ export const USER_ROLES = {
     'CANCELATION',
     'CANCELLED',
   ];
-  export const CT_MASTER_REQUEST_TYPE_ENUM = ['mark', 'unmark'];
+  export const CT_MASTER_REQUEST_TYPE_ENUM = ['MARK', 'UNMARK'];
   
   export const CT_FOLLOW_REQUEST_STATUS_ENUM = [0, 1, 2, 3, 4, 5]; // 0: PENDING, 1: Approved by Master, 2: Approved by Admin, 3:Rejected By Master, 4: Rejected By Admin, 5: Invalidated Request
   

@@ -40,11 +40,11 @@ export const getGroupsConfigForWhiteLevels = asyncHandler(async (req, res) => {
 });
 
 export const getGroups = asyncHandler(async (req, res) => {
-  const { groupType, roleType , masterLogin } = req.query;
+  const { groupType, roleType, masterLogin } = req.query;
   // console.log(groupType)
-  let { whiteLabelId } = req.user;
+  let { whiteLabel } = req.user;
 
-  const whiteLabel = new mongoose.Types.ObjectId(whiteLabelId);
+  whiteLabel = new mongoose.Types.ObjectId(whiteLabel);
 
   let options = {
     whiteLabel: whiteLabel,
@@ -53,21 +53,20 @@ export const getGroups = asyncHandler(async (req, res) => {
 
   let Groups = [];
   let finalRoleType = roleType?.toLowerCase() || "master";
-  if(finalRoleType === "master"){
-    if(groupType?.toLowerCase() === "demo"){
-      options.managerType = "demo";
-      options.isDefault = true;
-    } else {
+  if (finalRoleType === "master") {
+
     options.managerType = "real";
-    options.isDefault = true;
-    }
-  } else if(finalRoleType === "follower"){
-    if(!masterLogin){
+    // options.isDefault = true;
+
+  } else if (finalRoleType === "follower") {
+    if (!masterLogin) {
       return res.error("Master Login is required for follower role type", 400);
     }
+    console.log(masterLogin, whiteLabel);
+    
     const masterGroupMapping = await CtMasterRequestRepository.findApprovedMasterByLoginAndGroup(masterLogin, whiteLabel);
 
-    if(!masterGroupMapping){
+    if (!masterGroupMapping) {
       return res.error("No approved master found with the provided login and white label", 404);
     }
     return res.success({ Data: masterGroupMapping }, "Groups Fetched for follower", 200);
@@ -104,6 +103,8 @@ export const getGroups = asyncHandler(async (req, res) => {
   //     options.isDefault = true;
   //   }
   // }
+
+  console.log(options);
   
   Groups = await forexGroupRepository.findGroupByOptions(options);
   if (Groups.length < 1) {

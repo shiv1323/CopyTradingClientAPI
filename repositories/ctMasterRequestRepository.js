@@ -60,7 +60,7 @@ const CtMasterRequestRepository = {
     return await CtMasterRequest.findOne({
       masterLogin: String(masterLogin),
       whiteLabel: whiteLabelId,
-      type: "mark",
+      type: "MARK",
       status: "APPROVED",
     })
       .select("masterId masterLogin")
@@ -71,7 +71,7 @@ const CtMasterRequestRepository = {
     return await CtMasterRequest.findOne({
       masterLogin: String(masterLogin),
       whiteLabel: whiteLabelId,
-      type: "mark",
+      type: "MARK",
       status: "APPROVED",
     })
       .select("masterId masterLogin groupId")

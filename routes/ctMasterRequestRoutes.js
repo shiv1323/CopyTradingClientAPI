@@ -4,7 +4,7 @@ import { raiseRequestCtMaster} from "../controllers/copyTradingController/master
 
 const router = express.Router();
 
-router.get("/becomeMaster/request", authHandler, raiseRequestCtMaster);  // to be tested
+router.post("/becomeMaster/request", authHandler, raiseRequestCtMaster);  // to be tested
 // router.post("/unmarkMaster/request", authHandler, unMarkasMasterRequest);
 
 export default router;

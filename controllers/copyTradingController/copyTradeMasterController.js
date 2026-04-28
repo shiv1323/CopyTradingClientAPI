@@ -173,7 +173,7 @@ const STATUS_ARRAY = [
 ];
 
 export const getRequestList = asyncHandler(async (req, res) => {
-  const { whiteLabelId, id } = req.user;
+  const { whiteLabel, id } = req.user;
   const statusMap = {
     PENDING: 0,
     APPROVED: 2,
@@ -182,7 +182,7 @@ export const getRequestList = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 100;
   const query = {
-    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
+    whiteLabel: whiteLabel,
     followerAccount: id,
     status: 2,
   };

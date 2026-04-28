@@ -133,7 +133,7 @@ clientTradingAccountSchema.index({ login: -1 });
 
 // Trading account model
 const TradingAccount = mongoose.model(
-  "clientTradingAccount",
+  "clientTradingAccounts",
   clientTradingAccountSchema
 );
 

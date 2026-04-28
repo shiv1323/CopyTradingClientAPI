@@ -138,21 +138,21 @@ export const depositeAmountProcess = asyncHandler(async (req, res) => {
 });
 export const withDrawlAmountProcess = asyncHandler(async (req, res) => {
   // console.log("here");
-  const { id, userId, whiteLabelId } = req.user;
+  const { id, userId, whiteLabel } = req.user;
   const totalGroups = await forexGroupRepository.findGroupByOptions(
     {
-      WhiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
-      ManagerType: "real",
+      whiteLabel: whiteLabel,
+      managerType: "real",
     },
-    "GroupName MinimumDepositeLimit"
+    "groupName minimumDepositeLimit"
   );
   // console.log(totalGroups);
   const groupDict = totalGroups?.reduce((acc, item) => {
     const obj = item.toObject();
     // console.log(obj.MinimumDepositeLimit);
     acc[obj._id] = {
-      _id: obj.GroupName,
-      MinimumDepositeLimit: obj.MinimumDepositeLimit,
+      _id: obj.groupName,
+      minimumDepositeLimit: obj.minimumDepositeLimit,
     };
     return acc;
   }, {});
@@ -166,14 +166,14 @@ export const withDrawlAmountProcess = asyncHandler(async (req, res) => {
     req,
     groupDict,
     id,
-    new mongoose.Types.ObjectId(whiteLabelId),
+    whiteLabel,
   );
   if (resp?.success) {
     const saveTransactions = resp?.result?.transactionReports.map(
       async (transactionReport) => {
         const newTransactionHistoryRecord = {
           clientId: id,
-          whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
+          whiteLabel: whiteLabel,
           transactionId: transactionId,
           accountType: transactionReport.accountType,
           fromAccount: transactionReport.fromAccount,
@@ -307,7 +307,7 @@ const buildTransactionPipeline = ({
 };
 
 export const getTransactionHistory = asyncHandler(async (req, res) => {
-  let { id, whiteLabelId } = req.user;
+  let { id, whiteLabel } = req.user;
   let {
     fromDate,
     toDate,
@@ -319,11 +319,11 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
   } = req.body;
 
   const userMId = new mongoose.Types.ObjectId(id);
-  whiteLabel = new mongoose.Types.ObjectId(whiteLabelId);
+  whiteLabel = new mongoose.Types.ObjectId(whiteLabel);
 
   const pipeline = buildTransactionPipeline({
     userMId,
-    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
+    whiteLabel: whiteLabel,
     fromDate,
     toDate,
     transactionType,
@@ -356,7 +356,7 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
   const getWithdrawRequest =
     await withdrawlRequestsRepository.getWithdrawRequestByWhiteLabel(
       userMId,
-      new mongoose.Types.ObjectId(whiteLabelId),
+      whiteLabel,
     );
 
   const withdrawalPaymentMeathodDict = getWithdrawRequest?.reduce(
@@ -393,7 +393,7 @@ export const getTransactionHistory = asyncHandler(async (req, res) => {
       to: toAccount,
       clientDetails: {
         clientId: transaction.clientId,
-        whiteLabelId: new mongoose.Types.ObjectId(whiteLabelId),
+        whiteLabel: whiteLabel,
       },
       transactionDetails: {
         transactionId: transaction.transactionId,
@@ -435,7 +435,7 @@ function formatBalance(bal) {
 }
 function createWalletResponse(investmentWallet, tradingAccountsBal) {
   const totalTradingAccountBal = tradingAccountsBal.reduce(
-    (sum, account) => sum + (account.MarginFree || 0),
+    (sum, account) => sum + (account.marginFree || 0),
     0
   );
   const walletBalance = {
@@ -448,14 +448,14 @@ function createWalletResponse(investmentWallet, tradingAccountsBal) {
     tradingAccountWallet: {
       totalTradingAccountBal: formatBalance(totalTradingAccountBal),
       accounts: tradingAccountsBal.map((account, index) => ({
-        1: account.Login,
-        bal: formatBalance(account.MarginFree),
+        1: account.login,
+        bal: formatBalance(account.marginFree),
         availableForWithdrawal: formatBalance(formatBalance(
-          account.MarginFree 
-        ) - formatBalance(account.Credit)),
-        credit: formatBalance(account.Credit),
+          account.marginFree
+        ) - formatBalance(account.credit)),
+        credit: formatBalance(account.credit),
         currency: investmentWallet.walletCurrency,
-        groupId: account?.toObject()?.GroupId,
+        groupId: account?.toObject()?.groupId,
       })),
     },
   };
@@ -471,10 +471,11 @@ export const getClientOverAllFund = asyncHandler(async (req, res) => {
       "userId",
     ]),
     tradingAccountRepository.getAccByOptions(
-      { ClientId: id, ManagerType: "real" },
-      { Login: 1, MarginFree: 1, GroupId: 1, Balance: 1, Credit: 1 }
+      { clientId: id, managerType: "real" },
+      { login: 1, marginFree: 1, groupId: 1, balance: 1, credit: 1 }
     ),
   ]);
+  console.log(tradingAccountsBal);
   if (!investmentWallet) {
     return res.success("Investment wallet not yet setup", 200);
   }
@@ -489,7 +490,7 @@ export const withdrawamountToPersonalWallet = asyncHandler(async (req, res) => {
   const { whiteLabelId, id, userId } = req.user;
   // console.log(req.user);
 
-  const walletBalance = await clientProfileRepository.findOneClientSelectedField(id,walletBalance);
+  const walletBalance = await clientProfileRepository.findOneClientSelectedField(id, walletBalance);
   const {
     requestType,
     paymentMethod,
@@ -657,15 +658,19 @@ export const getCurrencyList = asyncHandler(async (req, res) => {
 });
 
 export const getMinimumDepositeByGroupId = asyncHandler(async (req, res) => {
+  console.log(req.query);
   const { groupId, type = "real" } = req.query;
+
   const queryMinimumDeposite = await forexGroupRepository.getGroupById(
     new mongoose.Types.ObjectId(groupId),
-    "MinimumDepositeLimit"
+    "minimumDepositeLimit"
   );
+
   if (!queryMinimumDeposite) {
     return res.error("Group not found", 404);
   }
-  const minimumDeposite = queryMinimumDeposite?.MinimumDepositeLimit || 0;
+
+  const minimumDeposite = queryMinimumDeposite?.minimumDepositeLimit || 0;
   res.success(
     { MinimumDeposit: minimumDeposite },
     "Minimum Deposite Retrieved Successfully",
@@ -679,7 +684,7 @@ export const getPaymentCurrencyList = asyncHandler(async (req, res) => {
 
   const filter = {
     paymentMethodId: new mongoose.Types.ObjectId(paymentMethodId),
-    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId), 
+    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
     status: true,
   };
 

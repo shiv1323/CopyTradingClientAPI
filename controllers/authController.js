@@ -234,6 +234,14 @@ const generateAndReturnTokens = async (
   context = { clientType: "WEB", deviceId: null },
 ) => {
   // console.log(client);
+  // const accessToken = generateAccessToken({
+  //   id: client._id,
+  //   userId: client.userId,
+  //   whiteLabelId: client.whiteLabel,
+  //   clientType:context.clientType,
+  //   sessionId: sessionId,
+  //   sessionExpiry: new Date(Date.now() + 15 * 60 * 1000),
+  // });
   const accessToken = generateToken(
     client._id,
     client.email,
@@ -242,7 +250,6 @@ const generateAndReturnTokens = async (
     sessionId,
     context.clientType,
   );
-
   const refreshToken = generateLegacyRefreshToken(
     client._id,
     client.email,

@@ -186,12 +186,12 @@ export const actionOnSelfMasterRequest = asyncHandler(async (req, res) => {
 });
 
 export const getListOfOwnFollowers = asyncHandler(async (req, res) => {
-  const { id, whiteLabelId } = req.user;
+  const { id, whiteLabel } = req.user;
   // const page = parseInt(req.query.page) || 1;
   // const limit = parseInt(req.query.limit) || 10;
   // const skip = (page - 1) * limit;
   const { masterLoginId, followerLoginId, fromDate, toDate } = req.body;
-  const query = { whiteLabel: new mongoose.Types.ObjectId(whiteLabelId) };
+  const query = { whiteLabel: whiteLabel };
   if (masterLoginId) {
     query.masterLogin = masterLoginId;
   }
@@ -208,7 +208,7 @@ export const getListOfOwnFollowers = asyncHandler(async (req, res) => {
   const master = await CTMastersRepository.getFollowersByMasterIdNdFollower({
     masterAccountId: id,
     loginId: masterLoginId,
-    whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
+    whiteLabel: whiteLabel,
   });
 
   if (!master || !master[0]?.followers) {
@@ -222,7 +222,7 @@ export const getListOfOwnFollowers = asyncHandler(async (req, res) => {
   const followerName = followers?.map((follower) => follower?.id?.name);
   const orders = await CtOrdersRepository.fetAllOrders(
     masterLoginId,
-    new mongoose.Types.ObjectId(whiteLabelId),
+    whiteLabel,
     followerLogins,
     followerName,
   );
@@ -255,7 +255,7 @@ export const getListOfOwnFollowers = asyncHandler(async (req, res) => {
     if (positionIds.length > 0) {
       const profitLoss =
         (await tradeReportRepository.fetchCTOrders(
-          new mongoose.Types.ObjectId(whiteLabelId),
+          whiteLabel,
           positionIds,
           followerLogin,
         )) || [];
@@ -278,10 +278,10 @@ export const getListOfOwnFollowers = asyncHandler(async (req, res) => {
 });
 
 export const getListOfOwnMasterLogins = asyncHandler(async (req, res) => {
-  const { id, whiteLabelId } = req.user;
+  const { id, whiteLabel } = req.user;
 
   const list = await tradingAccountRepository.getTradingAccountsOfMaster(
-    new mongoose.Types.ObjectId(whiteLabelId),
+    whiteLabel,
     id,
   );
 
@@ -293,9 +293,9 @@ export const getListOfOwnMasterLogins = asyncHandler(async (req, res) => {
     list.map(async (account) => {
       const followersGroups = await CTMastersRepository.getFollowersByMasterId(
         {
-          whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
-          loginId: account.Login,
-          masterAccountId: account.ClientId,
+          whiteLabel: whiteLabel,
+          loginId: account.login,
+          masterAccountId: account.clientId,
           status: true,
         },
         "followers",
@@ -308,7 +308,7 @@ export const getListOfOwnMasterLogins = asyncHandler(async (req, res) => {
       );
 
       return {
-        masterLoginId: account.Login,
+        masterLoginId: account.login,
         followersList: allFollowerLogins,
       };
     }),
@@ -322,11 +322,11 @@ export const getListOfOwnMasterLogins = asyncHandler(async (req, res) => {
 });
 
 export const getCTModuleCount = asyncHandler(async (req, res) => {
-  const { id, whiteLabelId } = req.user;
+  const { id, whiteLabel } = req.user;
   const [myMasterRequestsCount, myFollowersCount] = await Promise.all([
     CTFollowRequestRepository.countTotalReceivedRequests({
       masterAccount: id,
-      whiteLabel: new mongoose.Types.ObjectId(whiteLabelId),
+      whiteLabel: whiteLabel,
       status: 0,
       isHidden: false,
     }),

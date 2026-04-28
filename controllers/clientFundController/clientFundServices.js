@@ -46,16 +46,16 @@ export async function setBalance(login, amount, req, id, whiteLabel) {
     const updateObj = processTAccountData(bodyReq.data);
     const [saveToDb, saveToManagerDirecDeposits] = await Promise.all([
       tradingAccountRepository.updateTradingAccountByTAccountId(
-        bodyReq?.data?.Login,
+        bodyReq?.data?.login,
         updateObj
       ),
       ManagerDirectDealsRepository.create({
-        Operation: "INTERNAL_TRANSFER",
-        ClientId: id,
-        WhiteLabelId: whiteLabel,
-        Deal: createReq?.data?.answer?.ticket || "00000",
-        Login: null,
-        IsInternalTransfer: true,
+        operation: "INTERNAL_TRANSFER",
+        clientId: id,
+        whiteLabel: whiteLabel,
+        deal: createReq?.data?.answer?.ticket || "00000",
+        login: null,
+        isInternalTransfer: true,
       }),
     ]);
     if (!saveToDb) {
@@ -112,16 +112,16 @@ async function withdrawBalance(login, amount, req, id, whiteLabel) {
 
     const [saveToDb, saveToManagerDirecDeposits] = await Promise.all([
       tradingAccountRepository.updateTradingAccountByTAccountId(
-        bodyReq?.data?.Login,
+        bodyReq?.data?.login,
         updateObj
       ),
       ManagerDirectDealsRepository.create({
-        Operation: "INTERNAL_TRANSFER",
-        ClientId: id,
-        WhiteLabelId: whiteLabel,
-        Deal: withDrawlRes?.data?.answer?.ticket || "00000",
-        Login: null,
-        IsInternalTransfer: true,
+        operation: "INTERNAL_TRANSFER",
+        clientId: id,
+        whiteLabel: whiteLabel,
+        deal: withDrawlRes?.data?.answer?.ticket || "00000",
+        login: null,
+        isInternalTransfer: true,
       }),
     ]);
     if (!saveToDb) {
@@ -149,15 +149,15 @@ async function withdrawBalance(login, amount, req, id, whiteLabel) {
 export async function getBalance(loginId, clientId) {
   try {
     const query = {
-      Login: loginId,
-      ClientId: new mongoose.Types.ObjectId(clientId),
+      login: loginId,
+      clientId: new mongoose.Types.ObjectId(clientId),
     };
     const getTrAccBal =
       await tradingAccountRepository.getOneTradingAccountByField(query, [
-        "Balance",
+        "balance",
         "-_id",
       ]);
-    return parseFloat(getTrAccBal[0].Balance);
+    return parseFloat(getTrAccBal[0].balance);
   } catch (error) {
     throw new Error(error.message);
   }
@@ -189,17 +189,17 @@ export async function depositFromWalletToTradingAccount({
       "_id",
     ]),
 
-    tradingAccountRepository.getAccByOptions({ Login: toAccount }, "GroupId"),
+    tradingAccountRepository.getAccByOptions({ login: toAccount }, "groupId"),
   ]);
-  let groupId = traccountGroup[0]?.toObject()?.GroupId?.toString();
+  let groupId = traccountGroup[0]?.toObject()?.groupId?.toString();
   let checkDepositeLimit = groupDict[groupId] || { MinimumDepositeLimit: 0 };
   if (
     checkDepositeLimit &&
-    Number(checkDepositeLimit?.MinimumDepositeLimit) > Number(amount)
+    Number(checkDepositeLimit?.minimumDepositeLimit) > Number(amount)
   ) {
     return {
       success: false,
-      message: `Your Minimum Deposite Limit Is ${checkDepositeLimit?.MinimumDepositeLimit}.Please select higher amount!`,
+      message: `Your Minimum Deposite Limit Is ${checkDepositeLimit?.minimumDepositeLimit}.Please select higher amount!`,
     };
   }
   if (wallet.walletBalance < amount) {
