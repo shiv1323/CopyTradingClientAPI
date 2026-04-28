@@ -5,7 +5,7 @@ import CTFollowRequestRepository from "../../repositories/copyTradingRequestsRep
 import { sendCustomEmail } from "../../utils/commonUtils.js";
 import tradingAccountRepository from "../../repositories/tradingAccountRepository.js";
 import whiteLabelRepository from "../../repositories/whiteLabelRepository.js";
-import { postReqMT5Server } from "../../utils/mt5ServerUtils.js";
+import { postReqMT5Server } from "../../wrapperConfig/mt5WrapperUtils.js";
 import { MTAPI_ROUTES } from "../../config/mtTerminalConstanats.js";
 
 export const raiseRequestCtMaster = asyncHandler(async (req, res) => {

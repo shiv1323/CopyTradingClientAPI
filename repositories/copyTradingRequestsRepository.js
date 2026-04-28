@@ -1,4 +1,4 @@
-import CTMasterFollowRequest from "../models/copyTradingRequest.model.js";
+import CTMasterFollowRequest from "../models/ctFollowRequest.model.js";
 
 const CTFollowRequestRepository = {
   /**

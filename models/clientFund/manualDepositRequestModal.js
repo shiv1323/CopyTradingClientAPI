@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { getUTCTime } from "../utils/commonUtils.js";
+import { getUTCTime } from "../../utils/commonUtils.js";
 
 const RequestSchema = new mongoose.Schema(
   {

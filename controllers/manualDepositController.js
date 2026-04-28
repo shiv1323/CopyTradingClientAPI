@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 import bankAccountRepository from "../repositories/bankAccountRepository.js";
-import clientProfileRepository from "../repositories/clientProfileRepository.js";
 import upiAccountRepository from "../repositories/upiAccountRepository.js";
 import {
   getS3FileUrl,

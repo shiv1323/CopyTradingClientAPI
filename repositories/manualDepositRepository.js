@@ -1,4 +1,4 @@
-import ManualDepositRequest from "../models/manualDepositRequestModal.js";
+import ManualDepositRequest from "../models/clientFund/manualDepositRequestModal.js";
 
 
 class ManualDepositRepository {

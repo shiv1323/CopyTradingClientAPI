@@ -323,6 +323,16 @@ class ClientRepository {
   async updatesbswitch(clientId, updateData) {
     return await clientModel.findByIdAndUpdate(clientId, updateData, { new: true });
   }
+  async findOneClientSelectedField(id, fields, session = null) {
+    const fieldString = fields.join(" ");
+    const result = await clientModel
+      .findById(id)
+      .select(fieldString)
+      .session(session)
+      .lean();
+
+    return result;
+  }
 }
 
 export default new ClientRepository();
