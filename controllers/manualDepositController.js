@@ -7,7 +7,7 @@ import {
   getS3FileUrl,
   safeUnlink,
   uploadToS3,
-} from "./clientDocumentUpload/uploadDocumentFiles.js";
+} from "../controllers/clientDocumentUpload/uploadDocumentFiles.js";
 import manualDepositRepository from "../repositories/manualDepositRepository.js";
 import { createTransactionObject } from "./clientFundController/clientInvestentWalletController.js";
 import clientAccountTransactionHistoryRepository from "../repositories/clientAccountTransactionHistoryRepository.js";

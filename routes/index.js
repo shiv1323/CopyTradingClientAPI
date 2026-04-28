@@ -12,7 +12,6 @@ import selfMasterRoutes from "./copyTradingSelfMasterRequestRoutes.js";
 import ctTradeExecutionLogsRoutes from "./ctTradeExecutionLogsRoutes.js";
 import manualDepositRoutes from "./manualDepositRoutes.js";
 import paymentGetwayRoutes from "./paymentGetwayRoutes.js";
-import tradingAccountRoutes from './tradingAccountRoutes.js';
 import walletRoutes from './walletRoutes.js';
 
 const router = express.Router();
@@ -32,6 +31,5 @@ router.use('/ct/selfMaster', selfMasterRoutes)
 router.use('/ctTradeExecutionLogs', ctTradeExecutionLogsRoutes);
 router.use('/manualDeposit', manualDepositRoutes);
 router.use('/paymentGetway', paymentGetwayRoutes);
-router.use('/tradingAccount', tradingAccountRoutes);
 router.use('/wallet', walletRoutes);
 export default router;

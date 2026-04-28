@@ -5,9 +5,9 @@ import CTFollowRequestRepository from "../../repositories/copyTradingRequestsRep
 import CTMastersRepository from "../../repositories/ctMastersRepository.js";
 import moment from "moment";
 import clientProfileRepository from "../../repositories/clientProfileRepository.js";
-import { decrypt, encryptPasswordForStorage } from "../../utils/authUtils.js";
+import { decrypt } from "../../utils/authUtils.js";
 import bcrypt from "bcryptjs";
-import WhiteLabel from "../../models/whiteLevel.model.js";
+// import WhiteLabel from "../../models/whiteLevel.model.js";
 import CtMasterRequestRepository from "../../repositories/ctMasterRequestRepository.js";
 import { sendCustomEmail } from "../../utils/commonUtils.js";
 import ForexGroupRepository from "../../repositories/forexGroupRepository.js";
