@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { MTAPI_ROUTES } from "../../config/mtTerminalConstanats.js";
 import { asyncHandler } from "../../middlewares/asyncHandler.js";
 import forexGroupRepository from "../../repositories/forexGroupRepository.js";
-
+import tradingAccountRepository from "../../repositories/tradingAccountRepository.js";
 import {
   getReqMT5Server,
   postReqMT5Server,
@@ -40,10 +40,13 @@ export const getGroupsConfigForWhiteLevels = asyncHandler(async (req, res) => {
 });
 
 export const getGroups = asyncHandler(async (req, res) => {
-  const { groupType, roleType , masterLogin } = req.query;
+  const { groupType, roleType } = req.query;
   // console.log(groupType)
-  let { whiteLabelId } = req.user;
-
+  
+  let { whiteLabelId, userId, id } = req.user;
+  if(!roleType){
+    return res.error("Role type is required", 400);
+  };
   const whiteLabel = new mongoose.Types.ObjectId(whiteLabelId);
 
   let options = {
@@ -60,13 +63,19 @@ export const getGroups = asyncHandler(async (req, res) => {
     options.managerType = "real";
     }
   } else if(finalRoleType === "follower"){
-    if(!masterLogin){
-      return res.error("Master Login is required for follower role type", 400);
+    if(!userId && !id){
+      return res.error("Master User Id is required for follower role type", 400);
     }
-    const masterGroupMapping = await CtMasterRequestRepository.findApprovedMasterByLoginAndGroup(masterLogin, whiteLabel);
+    // const masterGroupMapping = await CtMasterRequestRepository.findApprovedMasterByLoginAndGroup(masterLogin, whiteLabel);
+    const masterGroupMapping = await tradingAccountRepository.getGroupsFromTrAccount(
+        { 
+          // whiteLabel: whiteLabel, 
+          clientId: id, isMasterAccount: true },
+        "groupId"
+      );
 
-    if(!masterGroupMapping){
-      return res.error("No approved master found with the provided login and white label", 404);
+    if(!masterGroupMapping || masterGroupMapping.length === 0){
+      return res.error("No approved master found with the provided login and white label", 400);
     }
     return res.success({ Data: masterGroupMapping }, "Groups Fetched for follower", 200);
   };

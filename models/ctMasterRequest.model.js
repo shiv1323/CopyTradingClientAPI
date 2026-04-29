@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import { CT_MASTER_REQUEST_STATUS_ENUM, CT_MASTER_REQUEST_TYPE_ENUM } from '../utils/constant.js';
-
+ 
 const { Schema, model, Types } = mongoose;
-
+ 
 const CtMasterRequestSchema = new Schema(
   {
     masterLogin: {
@@ -20,19 +20,6 @@ const CtMasterRequestSchema = new Schema(
       ref: 'clientProfile',
       required: true,
     },
-    groupId:{
-      type: Types.ObjectId,
-      ref: 'forexGroups',
-      required: true,
-    },
-    masterName: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    password: {type: String, default: null},
-    leverage: { type: String, default: null },
-    currency: { type: String, default: "USD" },
     status: {
       type: String,
       enum: CT_MASTER_REQUEST_STATUS_ENUM,
@@ -55,9 +42,22 @@ const CtMasterRequestSchema = new Schema(
       enum: CT_MASTER_REQUEST_TYPE_ENUM,
       required: true,
     },
+    masterName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    groupId:{
+      type: Types.ObjectId,
+      ref: 'forexGroups',
+      required: true,
+    },
+    password: {type: String, default: null},
+    leverage: { type: String, default: null },
+    currency: { type: String, default: "USD" },
   },
   {
-    collection: 'ctMasterRequest',
+    collection: 'ctMasterRequests',
   }
 );
 CtMasterRequestSchema.index(
@@ -69,7 +69,7 @@ CtMasterRequestSchema.index(
     },
   }
 );
-
+ 
 CtMasterRequestSchema.index(
   { masterLogin: 1, masterId: 1, whiteLabel: 1 },
   {
@@ -79,6 +79,6 @@ CtMasterRequestSchema.index(
     },
   }
 );
-const CtMasterRequest = model('ctMasterRequest', CtMasterRequestSchema);
-
+const CtMasterRequest = model('ctMasterRequests', CtMasterRequestSchema);
+ 
 export default CtMasterRequest;

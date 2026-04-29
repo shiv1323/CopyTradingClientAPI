@@ -280,6 +280,18 @@ class TradingAccountRepository {
       { isMasterAccount: value }
     );
   }
+  async getGroupsFromTrAccount(query, field) {
+    return await TradingAccountModel.find(query).select(field)
+    .populate({
+        path: "groupId",
+        select: "groupName group managerType description linkedGroupIds",
+        populate:{
+          path: "linkedGroupIds",
+          select: "groupName group managerType description"
+        }
+      })
+      .lean();
+  }
 }
 
 export default new TradingAccountRepository();

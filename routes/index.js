@@ -24,7 +24,7 @@ router.use("/tradingaccount", tradingAccountRoutes);
 router.use("/forexGroupConfig", forexGroupRoutes);
 router.use("/tradeHistory", clientReportRoutes);
 router.use('/profile',profileRoutes);
-router.use('/payment',paymentRoutes);
+router.use('/pay',paymentRoutes);
 router.use('/ctMasterRequest', ctMasterRequestRoutes);
 router.use('/ct/master', masterRoutes)
 router.use('/ct/selfMaster', selfMasterRoutes)
